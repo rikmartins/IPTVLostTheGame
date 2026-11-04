@@ -24,7 +24,7 @@ jobs:
       - run: flutter test
 
   android:
-    name: Build Android (telemóvel e TV)
+    name: Build Android release (telemóvel e TV)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -38,11 +38,15 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      # Em release, como no workflow de release: há verificações que só
+      # correm aí (ex.: checkReleaseAarMetadata). Sem a chave do GitHub
+      # assina com a de debug.
       - name: Build
         run: |
           set -o pipefail
           for flavor in mobile tv; do
-            flutter build apk --debug --flavor "$flavor" 2>&1 | tee -a build.log
+            flutter build apk --release --flavor "$flavor" \
+              --target-platform android-arm,android-arm64 2>&1 | tee -a build.log
           done
       # Os logs só se veem com sessão iniciada; a anotação é pública.
       - name: Erro do build no resumo
