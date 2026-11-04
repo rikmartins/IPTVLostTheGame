@@ -9,10 +9,7 @@ import '../../data/local/models/sync_state.dart';
 /// Relógio de 30 s: chega para as barras de progresso e o "agora/a seguir",
 /// e evita rebuilds a cada segundo em toda a grelha.
 final clockProvider = StreamProvider<DateTime>(
-  (ref) => Stream.periodic(
-    const Duration(seconds: 30),
-    (_) => DateTime.now(),
-  ),
+  (ref) => Stream.periodic(const Duration(seconds: 30), (_) => DateTime.now()),
 );
 
 @immutable
@@ -59,3 +56,28 @@ final nowNextProvider = Provider.autoDispose.family<NowNext, String>((
 
   return NowNext(current, next);
 });
+
+/// Programa atual e os seguintes de um canal, para o guia da
+/// pré-visualização. Um range scan no índice (canal, início) desde há um
+/// dia, para apanhar o programa que já começou.
+final channelScheduleProvider = Provider.autoDispose
+    .family<List<EpgProgramme>, String>((ref, epgChannelId) {
+      final now = ref.watch(clockProvider).value ?? DateTime.now();
+      ref.watch(catalogVersionProvider(SyncKind.epg));
+
+      return ref
+          .watch(isarProvider)
+          .epgProgrammes
+          .where()
+          .channelKeyEqualToStartGreaterThan(
+            EpgProgramme.keyFor(epgChannelId),
+            now.subtract(const Duration(days: 1)),
+          )
+          .filter()
+          .stopGreaterThan(now)
+          .limit(scheduleLength)
+          .findAllSync();
+    });
+
+/// Quantos programas o guia da pré-visualização mostra.
+const scheduleLength = 12;

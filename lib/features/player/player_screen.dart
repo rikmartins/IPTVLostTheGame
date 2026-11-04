@@ -1,18 +1,10 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
 
-import '../../app/providers.dart';
-import '../../app/session_controller.dart';
-import '../../app/settings_controller.dart';
-import '../../data/local/models/account_info.dart';
-import '../../data/remote/xtream/xtream_api.dart';
-import 'buffer_profiles.dart';
+import 'playback_session.dart';
 import 'widgets/live_osd.dart';
 
 /// Player em ecrã inteiro.
@@ -21,13 +13,15 @@ import 'widgets/live_osd.dart';
 ///   (cima/baixo, CH+/CH-, deslizar na vertical) e mostra um OSD.
 /// * VOD: um único item, com os controlos do media_kit (seek, pausa...).
 ///
-/// Um único [Player] por ecrã: no zapping troca-se só o `Media`, sem
-/// recriar o libmpv nem a textura de vídeo.
+/// Um único player por ecrã: no zapping troca-se só o `Media`, sem recriar
+/// o libmpv nem a textura de vídeo. No direto pode vir já a tocar da
+/// pré-visualização ([session]); nesse caso continua e não é fechado aqui.
 class PlayerScreen extends ConsumerStatefulWidget {
   const PlayerScreen.live({
     super.key,
     required List<int> this.channelIds,
     required this.initialIndex,
+    this.session,
   }) : vodTitle = null,
        vodUrl = null;
 
@@ -38,12 +32,16 @@ class PlayerScreen extends ConsumerStatefulWidget {
   }) : channelIds = null,
        initialIndex = 0,
        vodTitle = title,
-       vodUrl = url;
+       vodUrl = url,
+       session = null;
 
   final List<int>? channelIds;
   final int initialIndex;
   final String? vodTitle;
   final String? vodUrl;
+
+  /// Sessão de quem abriu o ecrã (a pré-visualização da TV em direto).
+  final PlaybackSession? session;
 
   bool get isLive => channelIds != null;
 
@@ -58,14 +56,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   static const _zapDebounce = Duration(milliseconds: 400);
   static const _osdTimeout = Duration(seconds: 4);
 
-  final _player = Player();
-  late final VideoController _controller;
-  late final Future<void> _configured;
-  final _subscriptions = <StreamSubscription<Object?>>[];
+  late final PlaybackSession _session;
+  late final bool _ownsSession;
+  StreamSubscription<bool>? _bufferingSubscription;
 
   late int _index = widget.initialIndex;
   bool _osdVisible = true;
-  bool _buffering = true;
+  late bool _buffering;
   String? _error;
   Timer? _osdTimer;
   Timer? _zapTimer;
@@ -73,24 +70,21 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   @override
   void initState() {
     super.initState();
-    // Antes do primeiro open, para a saída de vídeo já estar ligada.
-    _controller = VideoController(_player);
-    final profile = ref.read(settingsProvider).bufferProfile;
-    _configured = _applyProfile(profile.mpvProperties(live: widget.isLive));
+    _ownsSession = widget.session == null;
+    _session =
+        widget.session ??
+        ref.read(playbackSessionFactoryProvider)(live: widget.isLive);
 
-    _subscriptions
-      ..add(
-        _player.stream.buffering.listen((value) {
-          if (mounted) setState(() => _buffering = value);
-        }),
-      )
-      ..add(
-        _player.stream.error.listen((message) {
-          if (mounted) setState(() => _error = message);
-        }),
-      );
+    // Continua o stream da pré-visualização, ou abre um novo (e aí o
+    // erro antigo já não conta).
+    final continues = widget.isLive && _isPlaying(widget.channelIds![_index]);
+    _buffering = continues ? _session.buffering : true;
+    _bufferingSubscription = _session.bufferingStream.listen((value) {
+      if (mounted) setState(() => _buffering = value);
+    });
+    _session.error.addListener(_onError);
 
-    _open();
+    _open(initial: true);
     _scheduleOsdHide();
   }
 
@@ -98,61 +92,34 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   void dispose() {
     _osdTimer?.cancel();
     _zapTimer?.cancel();
-    for (final subscription in _subscriptions) {
-      subscription.cancel();
-    }
-    _player.dispose();
+    _bufferingSubscription?.cancel();
+    _session.error.removeListener(_onError);
+    if (_ownsSession) _session.dispose();
     super.dispose();
   }
 
-  /// Tem de correr antes do primeiro `open`: o mpv lê as opções de cache
-  /// quando abre o stream.
-  Future<void> _applyProfile(Map<String, String> properties) async {
-    final native = _player.platform;
-    if (native is! NativePlayer) return;
-    for (final MapEntry(:key, :value) in properties.entries) {
-      await native.setProperty(key, value);
-    }
-
-    // O media_kit ignora o código de erro do mpv: um nome de propriedade
-    // errado falhava em silêncio. Em debug, confirma-se cada valor.
-    if (kDebugMode) {
-      for (final MapEntry(:key, :value) in properties.entries) {
-        final actual = await native.getProperty(key);
-        if (actual != value) debugPrint('mpv: $key="$actual" (pedido "$value")');
-      }
-    }
+  void _onError() {
+    if (mounted) setState(() => _error = _session.error.value);
   }
 
-  Future<void> _open() async {
-    await _configured;
-    final url = widget.isLive
-        ? _liveUrl(widget.channelIds![_index])
-        : widget.vodUrl;
+  /// A pré-visualização já está a tocar este canal (sem erro).
+  bool _isPlaying(int channelId) =>
+      _session.liveChannel.value == channelId && _session.error.value == null;
+
+  /// [initial]: chamado do `initState`, onde o estado já foi preparado.
+  Future<void> _open({bool initial = false}) async {
+    if (!widget.isLive) {
+      await _session.open(widget.vodUrl!);
+      return;
+    }
+
+    final channelId = widget.channelIds![_index];
+    // Continua sem reabrir (nem pedir outra ligação ao servidor).
+    if (_isPlaying(channelId)) return;
+    final url = ref.read(liveStreamUrlProvider(channelId));
     if (url == null || !mounted) return;
-
-    setState(() {
-      _error = null;
-      _buffering = true;
-    });
-    await _player.open(
-      Media(
-        url,
-        // Os painéis que filtram o User-Agent na API costumam filtrá-lo
-        // também nos streams.
-        httpHeaders: const {'User-Agent': XtreamApi.defaultUserAgent},
-      ),
-    );
-  }
-
-  String? _liveUrl(int channelId) {
-    final urls = ref.read(streamUrlsProvider);
-    if (urls == null) return null;
-    final account = ref.read(isarProvider).accounts.getSync(0);
-    return urls.live(
-      channelId,
-      extension: account?.preferredLiveExtension ?? 'ts',
-    );
+    if (!initial) setState(() => _buffering = true);
+    await _session.open(url, liveChannelId: channelId);
   }
 
   void _zap(int delta) {
@@ -229,9 +196,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // null = sem controlos (o `NoVideoControls` do media_kit é um
-          // `const ... = null` sem tipo, que o strict-casts rejeita).
-          Video(controller: _controller, controls: null),
+          _session.video(),
           if (_buffering && _error == null)
             const Center(child: CircularProgressIndicator()),
           if (_error != null) _ErrorMessage(message: _error!),
@@ -257,8 +222,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Controlos adaptativos do media_kit (seek, pausa, ecrã inteiro).
-        Video(controller: _controller),
+        _session.video(controls: true),
         if (_error != null) _ErrorMessage(message: _error!),
         SafeArea(
           child: Align(

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/local/models/media_category.dart';
 import '../category_providers.dart';
+import 'category_visibility_dialog.dart';
 
 /// Grupos à esquerda em ecrãs largos (TV, desktop, tablet) e em chips por
 /// cima do conteúdo no telemóvel.
@@ -60,14 +61,48 @@ class _CategorySidebar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final categories = ref.watch(categoriesProvider(type));
+    final categories = ref.watch(visibleCategoriesProvider(type));
     final selected = ref.watch(selectedCategoryProvider(type));
-    final scheme = Theme.of(context).colorScheme;
+    final hidden = ref.watch(hiddenCategoriesProvider(type)).length;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
 
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 6, 8, 0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  hidden == 0
+                      ? 'Grupos'
+                      : 'Grupos · $hidden ${hidden == 1 ? 'oculto' : 'ocultos'}',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              _ManageButton(type: type),
+            ],
+          ),
+        ),
+        Expanded(child: _sidebarList(categories, selected, scheme, ref)),
+      ],
+    );
+  }
+
+  Widget _sidebarList(
+    List<MediaCategory> categories,
+    int? selected,
+    ColorScheme scheme,
+    WidgetRef ref,
+  ) {
     return ListView.builder(
       // Cada secção guarda a sua posição de scroll.
       key: PageStorageKey('categories-${type.name}'),
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.only(bottom: 8),
       itemCount: categories.length + 1,
       itemBuilder: (context, index) {
         final category = index == 0 ? null : categories[index - 1];
@@ -109,31 +144,57 @@ class _CategoryChips extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final categories = ref.watch(categoriesProvider(type));
+    final categories = ref.watch(visibleCategoriesProvider(type));
     final selected = ref.watch(selectedCategoryProvider(type));
 
     return SizedBox(
       height: 52,
-      child: ListView.separated(
-        key: PageStorageKey('chips-${type.name}'),
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        itemCount: categories.length + 1,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final category = index == 0 ? null : categories[index - 1];
-          final categoryId = category?.categoryId;
+      child: Row(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: _ManageButton(type: type),
+          ),
+          Expanded(
+            child: ListView.separated(
+              key: PageStorageKey('chips-${type.name}'),
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(4, 8, 16, 8),
+              itemCount: categories.length + 1,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final category = index == 0 ? null : categories[index - 1];
+                final categoryId = category?.categoryId;
 
-          return ChoiceChip(
-            label: Text(category?.name ?? allLabel),
-            selected: selected == categoryId,
-            showCheckmark: false,
-            onSelected: (_) => ref
-                .read(selectedCategoryProvider(type).notifier)
-                .select(categoryId),
-          );
-        },
+                return ChoiceChip(
+                  label: Text(category?.name ?? allLabel),
+                  selected: selected == categoryId,
+                  showCheckmark: false,
+                  onSelected: (_) => ref
+                      .read(selectedCategoryProvider(type).notifier)
+                      .select(categoryId),
+                );
+              },
+            ),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+/// Abre a escolha dos grupos visíveis.
+class _ManageButton extends StatelessWidget {
+  const _ManageButton({required this.type});
+
+  final CategoryType type;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'Escolher grupos visíveis',
+      icon: const Icon(Icons.tune),
+      onPressed: () => showCategoryVisibility(context, type: type),
     );
   }
 }

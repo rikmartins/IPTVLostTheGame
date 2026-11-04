@@ -38,6 +38,13 @@ Cliente IPTV (Xtream Codes) em Flutter para Android, Android TV e Windows.
 - Vários perfis (por exemplo *IPTV X* e *IPTV Y*), cada um com a sua lista
   guardada no dispositivo: mudar de perfil é imediato. Em
   **Definições → Perfis**, ou no nome do perfil no topo de cada secção.
+- Grupos visíveis à escolha: o botão ao lado de **Grupos** (TV, filmes e
+  séries) abre a lista de todos os grupos para mostrar ou ocultar. Os
+  ocultos também saem de "Todos". Fica guardado em cada perfil.
+- Pré-visualização na TV em direto: o primeiro toque (ou OK no comando)
+  num canal mostra-o num vídeo pequeno com o guia (agora e a seguir); o
+  segundo abre o ecrã inteiro, que continua o mesmo stream sem nova
+  ligação ao servidor.
 - Reprodução com media_kit (libmpv) e perfis de pré-buffer
   (Rápido / Normal / Estável).
 - VPN pessoal em **Definições → VPN**, de duas formas:
