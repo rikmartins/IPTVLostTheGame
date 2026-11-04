@@ -36,15 +36,13 @@ class WindowsVpnBackend implements VpnBackend {
   Future<VpnStatus> status() async => _queryStatus();
 
   @override
-  Stream<VpnStatus> watch() async* {
+  Stream<VpnStatus> watch() {
     // O SCM não avisa mudanças sem uma thread à espera: chega consultar a
     // cada 2 s, é uma chamada local.
-    VpnStatus? last;
-    while (true) {
-      final current = _queryStatus();
-      if (current != last) yield last = current;
-      await Future<void>.delayed(const Duration(seconds: 2));
-    }
+    return pollVpnStatus(
+      () async => _queryStatus(),
+      interval: const Duration(seconds: 2),
+    );
   }
 
   @override
