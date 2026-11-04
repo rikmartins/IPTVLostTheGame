@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Ecrã de arranque: cor do papel do logo com o ícone ao centro. -->
+<!-- Ecrã de arranque: cor do papel do logo com o ícone ao centro.
+     Nada de <bitmap android:src="@mipmap/ic_launcher">: a partir do
+     Android 8 o ic_launcher é um ícone adaptativo (XML) e o <bitmap>
+     rebenta a app no arranque. Um <item android:drawable> aceita os dois. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/ic_launcher_background" />
-    <item>
-        <bitmap
-            android:gravity="center"
-            android:src="@mipmap/ic_launcher" />
-    </item>
+    <item
+        android:drawable="@mipmap/ic_launcher"
+        android:gravity="center"
+        android:width="128dp"
+        android:height="128dp" />
 </layer-list>
