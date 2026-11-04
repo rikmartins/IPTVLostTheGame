@@ -1,15 +1,16 @@
 ﻿<#
 .SYNOPSIS
   Gera os instaladores Windows a partir de `flutter build windows --release`:
-    build\installer\IPTV-Setup-<versão>.exe     Inno Setup, por utilizador
-    build\installer\IPTV-<versão>-windows.msi   WiX 5, para todos os utilizadores
+    build\installer\LostTheGame-Setup.exe     Inno Setup, por utilizador
+    build\installer\LostTheGame-Windows.msi   WiX 5, para todos os utilizadores
+  Nomes fixos (sem versão): o README liga a releases/latest/download/<nome>.
 
 .EXAMPLE
   flutter build windows --release --build-name=0.1.0
   powershell -ExecutionPolicy Bypass -File windows\installer\build-installers.ps1 -Version 0.1.0
 #>
 param(
-  # Versão para os nomes dos ficheiros (pode ter sufixo, ex.: 0.2.0-beta.1).
+  # Versão da app (pode ter sufixo, ex.: 0.2.0-beta.1).
   [Parameter(Mandatory = $true)][string]$Version
 )
 
@@ -58,7 +59,7 @@ if (-not (Get-Command wix -ErrorAction SilentlyContinue)) {
   -arch x64 `
   -d "AppVersion=$numericVersion" `
   -bindpath "Release=$release" `
-  -o (Join-Path $out "IPTV-$Version-windows.msi")
+  -o (Join-Path $out "LostTheGame-Windows.msi")
 if ($LASTEXITCODE -ne 0) { throw "WiX falhou ($LASTEXITCODE)" }
 
 Get-ChildItem $out -File | Where-Object { $_.Extension -in '.exe', '.msi' } |

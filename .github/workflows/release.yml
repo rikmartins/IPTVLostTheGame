@@ -3,10 +3,14 @@
 #   git tag v0.2.0 && git push origin v0.2.0
 #
 # Cada release tem sempre os quatro ficheiros, ou não é publicada:
-#   IPTV-X.Y.Z-android.apk      telemóveis e tablets
-#   IPTV-X.Y.Z-android-tv.apk   Android TV
-#   IPTV-Setup-X.Y.Z.exe        Windows, por utilizador (atualiza sem UAC)
-#   IPTV-X.Y.Z-windows.msi      Windows, para todos os utilizadores
+#   LostTheGame-Android.apk     telemóveis e tablets
+#   LostTheGame-AndroidTV.apk   Android TV
+#   LostTheGame-Setup.exe       Windows, por utilizador (atualiza sem UAC)
+#   LostTheGame-Windows.msi     Windows, para todos os utilizadores
+#
+# Os nomes não levam a versão de propósito: o README liga a
+# https://github.com/<repo>/releases/latest/download/<nome>, que aponta
+# sempre para a release mais recente. A versão está na própria release.
 #
 # A versão da app vem da tag (não é preciso mexer no pubspec) e o número de
 # build do número da execução, que só sobe: o Android exige versionCode
@@ -92,12 +96,13 @@ jobs:
         if: failure()
         run: bash .github/scripts/annotate-build-error.sh build.log "Build Android falhou"
 
-      # Os nomes são o que o atualizador da app procura (ver pickAsset).
+      # Nomes fixos (links do README) e com "TV" à parte, que é o que o
+      # atualizador da app usa para distinguir as variantes (ver pickAsset).
       - name: Nomes finais
         run: |
           mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-mobile-release.apk "dist/IPTV-$VERSION-android.apk"
-          cp build/app/outputs/flutter-apk/app-tv-release.apk "dist/IPTV-$VERSION-android-tv.apk"
+          cp build/app/outputs/flutter-apk/app-mobile-release.apk dist/LostTheGame-Android.apk
+          cp build/app/outputs/flutter-apk/app-tv-release.apk dist/LostTheGame-AndroidTV.apk
 
       - uses: actions/upload-artifact@v7
         with:
@@ -169,12 +174,11 @@ jobs:
 
       - name: Confirmar os quatro ficheiros
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
           for file in \
-            "IPTV-$VERSION-android.apk" \
-            "IPTV-$VERSION-android-tv.apk" \
-            "IPTV-Setup-$VERSION.exe" \
-            "IPTV-$VERSION-windows.msi"; do
+            LostTheGame-Android.apk \
+            LostTheGame-AndroidTV.apk \
+            LostTheGame-Setup.exe \
+            LostTheGame-Windows.msi; do
             if [ ! -f "dist/$file" ]; then
               echo "::error::Falta $file: a release não é publicada incompleta."
               exit 1

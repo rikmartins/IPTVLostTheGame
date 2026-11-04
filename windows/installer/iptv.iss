@@ -22,8 +22,9 @@ PrivilegesRequiredOverridesAllowed=dialog
 DefaultDirName={autopf}\{#AppName}
 DisableProgramGroupPage=yes
 OutputDir=..\..\build\installer
-; O "Setup" no nome é o que a app procura na release (ver pickAsset).
-OutputBaseFilename=IPTV-Setup-{#AppVersion}
+; Nome fixo (sem versão) para o link "releases/latest/download" do README;
+; o "Setup" no nome é o que a app procura na release (ver pickAsset).
+OutputBaseFilename=LostTheGame-Setup
 Compression=lzma2/ultra64
 SolidCompression=yes
 ArchitecturesAllowed=x64compatible

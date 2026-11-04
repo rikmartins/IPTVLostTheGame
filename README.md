@@ -1,13 +1,44 @@
-# IPTV
+<p align="center">
+  <img src="assets/branding/logo.webp" alt="Lost the Game — IPTV Service" width="460">
+</p>
 
-Cliente IPTV (Xtream Codes) em Flutter para Android, Android TV, Windows,
-macOS e iOS.
+<p align="center">
+  <a href="https://github.com/rikmartins/IPTVLostTheGame/releases/latest"><img src="https://img.shields.io/github/v/release/rikmartins/IPTVLostTheGame?label=%C3%BAltima%20vers%C3%A3o&color=5E8F4E" alt="Última versão"></a>
+</p>
+
+## Download
+
+Os links descarregam sempre a versão mais recente.
+
+| Dispositivo | Download direto |
+|---|---|
+| Android (telemóvel e tablet) | [LostTheGame-Android.apk](https://github.com/rikmartins/IPTVLostTheGame/releases/latest/download/LostTheGame-Android.apk) |
+| Android TV | [LostTheGame-AndroidTV.apk](https://github.com/rikmartins/IPTVLostTheGame/releases/latest/download/LostTheGame-AndroidTV.apk) |
+| Windows (instalador) | [LostTheGame-Setup.exe](https://github.com/rikmartins/IPTVLostTheGame/releases/latest/download/LostTheGame-Setup.exe) |
+| Windows (MSI) | [LostTheGame-Windows.msi](https://github.com/rikmartins/IPTVLostTheGame/releases/latest/download/LostTheGame-Windows.msi) |
+
+**Android / Android TV:** ao abrir o APK, o Android pede para autorizar a
+instalação de apps desconhecidas para o browser (ou para a app que usaste
+para descarregar, como a *Downloader* na TV).
+
+**Windows:** o `.exe` instala só para o teu utilizador e as atualizações não
+pedem administrador; o `.msi` instala para todos os utilizadores do PC. Como
+o instalador ainda não tem assinatura digital, o SmartScreen pode avisar:
+*Mais informações → Executar mesmo assim*.
+
+Depois de instalada, a app procura novas versões em
+**Definições → Aplicação**.
+
+---
+
+Cliente IPTV (Xtream Codes) em Flutter para Android, Android TV e Windows.
 
 - Catálogo (canais, filmes, séries e guia TV) sincronizado para uma base de
   dados local (Isar) num isolate próprio; a interface lê só daí.
 - Reprodução com media_kit (libmpv) e perfis de pré-buffer
   (Rápido / Normal / Estável).
-- Atualizações a partir das releases deste repositório.
+- Tema claro ou escuro, e atualizações a partir das releases deste
+  repositório.
 
 ## Desenvolvimento
 
@@ -21,8 +52,9 @@ flutter run --flavor mobile   # Android (telemóvel/tablet)
 flutter run --flavor tv       # Android TV
 ```
 
-No Android há duas variantes (flavors) com o mesmo identificador: `mobile` e
-`tv`. Só o manifest muda (`android/app/src/tv`: launcher e banner da TV).
+No Android há duas variantes (flavors) com o mesmo identificador
+(`com.iptvapp.lostthegame`): `mobile` e `tv`. Só o manifest muda
+(`android/app/src/tv`: launcher e banner da TV).
 
 ## Publicar uma versão
 
@@ -43,17 +75,10 @@ No Android há duas variantes (flavors) com o mesmo identificador: `mobile` e
    git push origin v0.2.0
    ```
 
-   O workflow `Release` publica sempre quatro ficheiros (ou nenhum):
-
-   | Ficheiro | Para |
-   |---|---|
-   | `IPTV-X.Y.Z-android.apk` | telemóveis e tablets Android |
-   | `IPTV-X.Y.Z-android-tv.apk` | Android TV |
-   | `IPTV-Setup-X.Y.Z.exe` | Windows, só para o utilizador atual (atualiza sem UAC) |
-   | `IPTV-X.Y.Z-windows.msi` | Windows, para todos os utilizadores (Program Files) |
-
-   A versão da app vem da tag. O atualizador da app descarrega sempre a
-   mesma variante que está instalada.
+   O workflow `Release` publica sempre os quatro ficheiros da tabela de
+   download (ou nenhum). Os nomes não levam a versão, para os links acima
+   apontarem sempre para a mais recente; a versão da app vem da tag. O
+   atualizador da app descarrega sempre a mesma variante que está instalada.
 
    Tags com hífen (`v0.2.0-beta.1`) saem como pré-release e a app não as
    oferece como atualização.

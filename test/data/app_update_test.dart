@@ -62,18 +62,19 @@ void main() {
       );
     });
 
-    group('variante TV / telemóvel (formato publicado pelo workflow)', () {
+    group('formato publicado pelo workflow de release', () {
       final release = [
-        _asset('IPTV-0.2.0-android.apk'),
-        _asset('IPTV-0.2.0-android-tv.apk'),
-        _asset('IPTV-Setup-0.2.0.exe'),
+        _asset('LostTheGame-Android.apk'),
+        _asset('LostTheGame-AndroidTV.apk'),
+        _asset('LostTheGame-Setup.exe'),
+        _asset('LostTheGame-Windows.msi'),
       ];
 
       test('o telemóvel recebe o APK de telemóvel', () {
         expect(
           pickAsset(release, UpdatePlatform.android, androidAbi: 'arm64-v8a')
               ?.name,
-          'IPTV-0.2.0-android.apk',
+          'LostTheGame-Android.apk',
         );
       });
 
@@ -85,7 +86,29 @@ void main() {
             androidAbi: 'armeabi-v7a',
             androidVariant: AndroidVariant.tv,
           )?.name,
-          'IPTV-0.2.0-android-tv.apk',
+          'LostTheGame-AndroidTV.apk',
+        );
+      });
+
+      test('no Windows o .exe ganha ao .msi', () {
+        expect(
+          pickAsset(release, UpdatePlatform.windows)?.name,
+          'LostTheGame-Setup.exe',
+        );
+      });
+
+      test('a v0.1.0 (nomes com versão) também é reconhecida', () {
+        final old = [
+          _asset('IPTV-0.1.0-android.apk'),
+          _asset('IPTV-0.1.0-android-tv.apk'),
+        ];
+        expect(
+          pickAsset(
+            old,
+            UpdatePlatform.android,
+            androidVariant: AndroidVariant.tv,
+          )?.name,
+          'IPTV-0.1.0-android-tv.apk',
         );
       });
 
