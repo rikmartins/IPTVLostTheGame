@@ -39,7 +39,12 @@ Cliente IPTV (Xtream Codes) em Flutter para Android, Android TV e Windows.
   (Rápido / Normal / Estável).
 - VPN pessoal WireGuard a partir de um ficheiro `.conf` (Android e
   Windows), em **Definições → VPN**. No Android pode passar só o tráfego da
-  app; no Windows pede administrador só na primeira ligação.
+  app; no Windows pede administrador só na primeira ligação. Se o servidor
+  não responder, a app desliga a VPN sozinha para não ficares sem internet.
+- Na TV, o login e o `.conf` da VPN podem ser preenchidos no telemóvel:
+  lê o código QR no ecrã e preenche a página que abre (mesma rede Wi-Fi;
+  os dados não passam pela internet).
+- Opção **Memorizar dados** no login.
 - Tema claro ou escuro, e atualizações a partir das releases deste
   repositório.
 

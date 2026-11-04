@@ -148,7 +148,8 @@ class SettingsScreen extends ConsumerWidget {
         title: const Text('Terminar sessão?'),
         content: const Text(
           'A lista de canais, filmes, séries e o guia são apagados deste '
-          'dispositivo. As definições mantêm-se.',
+          'dispositivo. As definições e os dados de acesso memorizados '
+          'mantêm-se.',
         ),
         actions: [
           TextButton(

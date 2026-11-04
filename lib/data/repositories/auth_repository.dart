@@ -26,11 +26,19 @@ class AuthRepository {
 
   static const _credentialsKey = 'xtream_credentials';
 
+  /// "Memorizar dados": sobrevive ao logout, para preencher o formulário.
+  static const _rememberedKey = 'remembered_login';
+
   /// Valida no servidor e só depois grava. Lança `XtreamException`.
+  ///
+  /// Com [remember] os dados ficam memorizados para o próximo login (por
+  /// exemplo depois de terminar sessão); sem ele, os memorizados são
+  /// apagados.
   Future<({XtreamCredentials credentials, AccountInfo account})> login({
     required String server,
     required String username,
     required String password,
+    bool remember = true,
   }) async {
     final credentials = XtreamCredentials.fromInput(
       server: server,
@@ -49,10 +57,13 @@ class AuthRepository {
         if (previous != null && previous != credentials) await _clearCatalog();
         await _isar.accounts.put(account);
       });
-      await _storage.write(
-        key: _credentialsKey,
-        value: jsonEncode(credentials.toJson()),
-      );
+      final encoded = jsonEncode(credentials.toJson());
+      await _storage.write(key: _credentialsKey, value: encoded);
+      if (remember) {
+        await _storage.write(key: _rememberedKey, value: encoded);
+      } else {
+        await _storage.delete(key: _rememberedKey);
+      }
 
       return (credentials: credentials, account: account);
     } finally {
@@ -62,18 +73,26 @@ class AuthRepository {
 
   /// Sessão guardada, para arrancar sem ecrã de login (offline-first: a UI
   /// abre logo com os dados do Isar e sincroniza em segundo plano).
-  Future<XtreamCredentials?> restore() async {
-    final raw = await _storage.read(key: _credentialsKey);
+  Future<XtreamCredentials?> restore() => _read(_credentialsKey);
+
+  /// Dados memorizados no último login com "Memorizar dados".
+  Future<XtreamCredentials?> remembered() => _read(_rememberedKey);
+
+  Future<void> forgetRemembered() => _storage.delete(key: _rememberedKey);
+
+  Future<XtreamCredentials?> _read(String key) async {
+    final raw = await _storage.read(key: key);
     if (raw == null) return null;
     try {
       return XtreamCredentials.fromJson(jsonDecode(raw) as Map<String, dynamic>);
     } catch (_) {
-      await _storage.delete(key: _credentialsKey);
+      await _storage.delete(key: key);
       return null;
     }
   }
 
-  /// Cancelar qualquer sincronização em curso antes de chamar isto.
+  /// Cancelar qualquer sincronização em curso antes de chamar isto. Os
+  /// dados memorizados ficam.
   Future<void> logout() async {
     await _storage.delete(key: _credentialsKey);
     await _isar.writeTxn(_clearCatalog);

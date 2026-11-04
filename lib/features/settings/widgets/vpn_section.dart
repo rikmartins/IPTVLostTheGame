@@ -7,8 +7,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/settings_controller.dart';
 import '../../../app/vpn_controller.dart';
+import '../../../core/config/app_config.dart';
+import '../../../data/phone_entry/phone_form_server.dart';
 import '../../../data/vpn/vpn_backend.dart';
 import '../../../data/vpn/wireguard_config.dart';
+import '../../phone_entry/phone_entry_panel.dart';
 import 'settings_tiles.dart';
 
 /// VPN pessoal a partir de um ficheiro .conf do WireGuard.
@@ -81,7 +84,8 @@ class VpnSection extends ConsumerWidget {
           const SettingsHint(
             'Na primeira ligação o Windows pede permissão de administrador, '
             'uma única vez. A VPN fica ativa em todo o sistema, também com a '
-            'app fechada, até a desligares aqui.',
+            'app fechada, até a desligares aqui. Reiniciar o PC também a '
+            'desliga.',
           ),
         if (config.removedScripts)
           const SettingsHint(
@@ -99,6 +103,14 @@ class VpnSection extends ConsumerWidget {
                 icon: const Icon(Icons.upload_file),
                 label: const Text('Substituir .conf'),
               ),
+              if (isAndroidTvBuild)
+                OutlinedButton.icon(
+                  onPressed: vpn.busy
+                      ? null
+                      : () => _receiveFromPhone(context, ref),
+                  icon: const Icon(Icons.qr_code_2),
+                  label: const Text('Enviar do telemóvel'),
+                ),
               TextButton.icon(
                 onPressed: vpn.busy ? null : () => _confirmRemove(context, ref),
                 icon: const Icon(Icons.delete_outline),
@@ -114,6 +126,8 @@ class VpnSection extends ConsumerWidget {
   static String _statusText(VpnState vpn, WireGuardConfig config) {
     return switch (vpn.status) {
       VpnStatus.connected => 'Ligada a ${config.endpoint}',
+      VpnStatus.connecting when vpn.checking =>
+        'A confirmar que o servidor responde…',
       VpnStatus.connecting => 'A ligar…',
       VpnStatus.disconnecting => 'A desligar…',
       VpnStatus.disconnected => 'Desligada',
@@ -169,6 +183,14 @@ class _NoConfig extends ConsumerWidget {
                 icon: const Icon(Icons.upload_file),
                 label: const Text('Importar ficheiro .conf'),
               ),
+              // Na TV o .conf costuma estar no telemóvel, e colar com o
+              // comando é impraticável.
+              if (isAndroidTvBuild)
+                OutlinedButton.icon(
+                  onPressed: () => _receiveFromPhone(context, ref),
+                  icon: const Icon(Icons.qr_code_2),
+                  label: const Text('Enviar do telemóvel'),
+                ),
               OutlinedButton.icon(
                 onPressed: () => _paste(context, ref),
                 icon: const Icon(Icons.content_paste),
@@ -204,6 +226,62 @@ Future<void> _import(BuildContext context, WidgetRef ref) async {
   }
   if (!context.mounted) return;
   await _save(context, ref, utf8.decode(bytes, allowMalformed: true));
+}
+
+const _vpnPhoneForm = PhoneForm(
+  title: 'VPN pessoal (WireGuard)',
+  intro:
+      'Escolhe o ficheiro .conf que o teu fornecedor de VPN te deu, ou cola '
+      'o conteúdo.',
+  fields: [
+    PhoneField(
+      'config',
+      'Configuração WireGuard',
+      type: PhoneFieldType.wireguardConfig,
+      placeholder: '[Interface]\nPrivateKey = …\nAddress = …',
+    ),
+  ],
+  submitLabel: 'Enviar para a app',
+  doneMessage: 'A configuração da VPN ficou guardada na app.',
+);
+
+/// O .conf vem do telemóvel pelo QR (ver [PhoneEntryPanel]).
+Future<void> _receiveFromPhone(BuildContext context, WidgetRef ref) async {
+  final controller = ref.read(vpnControllerProvider.notifier);
+  final messenger = ScaffoldMessenger.of(context);
+  final saved = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Configuração da VPN'),
+      content: SizedBox(
+        width: 340,
+        child: PhoneEntryPanel(
+          form: _vpnPhoneForm,
+          onSubmit: (values) async {
+            try {
+              await controller.importConfig(values['config'] ?? '');
+            } on FormatException catch (e) {
+              return 'Ficheiro inválido: ${e.message}';
+            }
+            if (dialogContext.mounted) Navigator.of(dialogContext).pop(true);
+            return null;
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          autofocus: true,
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: const Text('Fechar'),
+        ),
+      ],
+    ),
+  );
+  if (saved == true) {
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Configuração da VPN guardada')),
+    );
+  }
 }
 
 Future<void> _paste(BuildContext context, WidgetRef ref) async {

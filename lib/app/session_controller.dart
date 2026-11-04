@@ -24,10 +24,16 @@ class SessionController extends AsyncNotifier<XtreamCredentials?> {
     required String server,
     required String username,
     required String password,
+    bool remember = true,
   }) async {
     final result = await ref
         .read(authRepositoryProvider)
-        .login(server: server, username: username, password: password);
+        .login(
+          server: server,
+          username: username,
+          password: password,
+          remember: remember,
+        );
     state = AsyncData(result.credentials);
     ref.read(syncControllerProvider.notifier).syncNow(result.credentials);
   }
