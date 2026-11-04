@@ -8,7 +8,7 @@
 PRODUCT_NAME = iptv_app
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.exemplo.iptvApp
+PRODUCT_BUNDLE_IDENTIFIER = com.iptvapp.lostthegame
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.exemplo. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 iptvapp. All rights reserved.

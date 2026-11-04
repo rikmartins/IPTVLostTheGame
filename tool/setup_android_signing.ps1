@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Cria a chave de assinatura Android de release (uma única vez na vida da app).
 

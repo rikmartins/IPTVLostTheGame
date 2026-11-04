@@ -1,4 +1,4 @@
-package com.exemplo.iptv_app
+package com.iptvapp.lostthegame
 
 import io.flutter.embedding.android.FlutterActivity
 

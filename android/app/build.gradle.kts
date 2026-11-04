@@ -17,7 +17,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.exemplo.iptv_app"
+    namespace = "com.iptvapp.lostthegame"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -27,8 +27,9 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.exemplo.iptv_app"
+        // Nunca mudar depois da primeira release: o Android só atualiza uma
+        // app com o mesmo applicationId e a mesma chave de assinatura.
+        applicationId = "com.iptvapp.lostthegame"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

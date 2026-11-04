@@ -43,13 +43,14 @@ No Android há duas variantes (flavors) com o mesmo identificador: `mobile` e
    git push origin v0.2.0
    ```
 
-   O workflow `Release` publica sempre três ficheiros (ou nenhum):
+   O workflow `Release` publica sempre quatro ficheiros (ou nenhum):
 
    | Ficheiro | Para |
    |---|---|
    | `IPTV-X.Y.Z-android.apk` | telemóveis e tablets Android |
    | `IPTV-X.Y.Z-android-tv.apk` | Android TV |
-   | `IPTV-Setup-X.Y.Z.exe` | Windows |
+   | `IPTV-Setup-X.Y.Z.exe` | Windows, só para o utilizador atual (atualiza sem UAC) |
+   | `IPTV-X.Y.Z-windows.msi` | Windows, para todos os utilizadores (Program Files) |
 
    A versão da app vem da tag. O atualizador da app descarrega sempre a
    mesma variante que está instalada.

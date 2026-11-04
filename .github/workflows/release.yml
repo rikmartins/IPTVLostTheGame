@@ -2,10 +2,11 @@
 #
 #   git tag v0.2.0 && git push origin v0.2.0
 #
-# Cada release tem sempre os três ficheiros, ou não é publicada:
+# Cada release tem sempre os quatro ficheiros, ou não é publicada:
 #   IPTV-X.Y.Z-android.apk      telemóveis e tablets
 #   IPTV-X.Y.Z-android-tv.apk   Android TV
-#   IPTV-Setup-X.Y.Z.exe        Windows
+#   IPTV-Setup-X.Y.Z.exe        Windows, por utilizador (atualiza sem UAC)
+#   IPTV-X.Y.Z-windows.msi      Windows, para todos os utilizadores
 #
 # A versão da app vem da tag (não é preciso mexer no pubspec) e o número de
 # build do número da execução, que só sobe: o Android exige versionCode
@@ -47,8 +48,12 @@ jobs:
           channel: stable
           cache: true
 
+      # VERSION vai nos nomes dos ficheiros; BUILD_NAME (só números) na app.
       - name: Versão a partir da tag
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "BUILD_NAME=${VERSION%%-*}" >> "$GITHUB_ENV"
 
       # Sem a chave real o build pára: um APK assinado com outra chave não
       # atualiza a app instalada e obrigaria os utilizadores a desinstalar.
@@ -79,7 +84,7 @@ jobs:
           for flavor in mobile tv; do
             flutter build apk --release --flavor "$flavor" \
               --target-platform android-arm,android-arm64 \
-              --build-name="$VERSION" \
+              --build-name="$BUILD_NAME" \
               --build-number="${{ github.run_number }}" 2>&1 | tee -a build.log
           done
 
@@ -101,7 +106,7 @@ jobs:
           if-no-files-found: error
 
   windows:
-    name: Instalador Windows
+    name: Instaladores Windows
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
@@ -113,7 +118,10 @@ jobs:
 
       - name: Versão a partir da tag
         shell: bash
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "BUILD_NAME=${VERSION%%-*}" >> "$GITHUB_ENV"
 
       - run: flutter pub get
 
@@ -122,38 +130,31 @@ jobs:
         run: |
           set -o pipefail
           flutter build windows --release \
-            --build-name="$VERSION" \
+            --build-name="$BUILD_NAME" \
             --build-number="${{ github.run_number }}" 2>&1 | tee build.log
+
+      - name: Instaladores (.exe e .msi)
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File windows/installer/build-installers.ps1 -Version $env:VERSION *> installers.log
+          $code = $LASTEXITCODE
+          Get-Content installers.log
+          exit $code
 
       - name: Erro do build no resumo
         if: failure()
         shell: bash
-        run: bash .github/scripts/annotate-build-error.sh build.log "Build Windows falhou"
-
-      # As apps Flutter para Windows precisam do runtime do Visual C++; ir
-      # com ele evita o erro "VCRUNTIME140.dll em falta" em PCs sem o
-      # redistribuível instalado.
-      - name: Runtime do Visual C++
-        shell: pwsh
         run: |
-          $out = "build\windows\x64\runner\Release"
-          foreach ($dll in "msvcp140.dll", "vcruntime140.dll", "vcruntime140_1.dll") {
-            Copy-Item "$env:WINDIR\System32\$dll" $out
-          }
-
-      - name: Instalador (Inno Setup)
-        shell: pwsh
-        run: |
-          choco install innosetup --no-progress -y
-          $iscc = Get-ChildItem "${env:ProgramFiles(x86)}\Inno Setup*\ISCC.exe", "$env:ProgramFiles\Inno Setup*\ISCC.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (-not $iscc) { throw "ISCC.exe não encontrado" }
-          & $iscc.FullName "/DAppVersion=$env:VERSION" windows\installer\iptv.iss
-          if ($LASTEXITCODE -ne 0) { throw "ISCC falhou ($LASTEXITCODE)" }
+          log=build.log
+          [ -s installers.log ] && log=installers.log
+          bash .github/scripts/annotate-build-error.sh "$log" "Build Windows falhou"
 
       - uses: actions/upload-artifact@v7
         with:
           name: windows
-          path: build/installer/*.exe
+          path: |
+            build/installer/*.exe
+            build/installer/*.msi
           if-no-files-found: error
 
   release:
@@ -166,10 +167,14 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Confirmar os três ficheiros
+      - name: Confirmar os quatro ficheiros
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          for file in "IPTV-$VERSION-android.apk" "IPTV-$VERSION-android-tv.apk" "IPTV-Setup-$VERSION.exe"; do
+          for file in \
+            "IPTV-$VERSION-android.apk" \
+            "IPTV-$VERSION-android-tv.apk" \
+            "IPTV-Setup-$VERSION.exe" \
+            "IPTV-$VERSION-windows.msi"; do
             if [ ! -f "dist/$file" ]; then
               echo "::error::Falta $file: a release não é publicada incompleta."
               exit 1
@@ -179,6 +184,7 @@ jobs:
 
       - uses: softprops/action-gh-release@v3
         with:
+          name: Lost the Game ${{ github.ref_name }}
           files: dist/*
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-') }}

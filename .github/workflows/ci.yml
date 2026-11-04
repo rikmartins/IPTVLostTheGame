@@ -48,3 +48,37 @@ jobs:
       - name: Erro do build no resumo
         if: failure()
         run: bash .github/scripts/annotate-build-error.sh build.log "Build Android falhou"
+
+  # Os mesmos instaladores da release (.exe e .msi), sem publicar: assim um
+  # problema no Inno Setup ou no WiX aparece aqui e não numa tag.
+  windows:
+    name: Instaladores Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Build
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter build windows --release \
+            --build-name="0.0.${{ github.run_number }}" 2>&1 | tee build.log
+      - name: Instaladores (.exe e .msi)
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File windows/installer/build-installers.ps1 -Version "0.0.${{ github.run_number }}" *> installers.log
+          $code = $LASTEXITCODE
+          Get-Content installers.log
+          exit $code
+      - name: Erro do build no resumo
+        if: failure()
+        shell: bash
+        run: |
+          log=build.log
+          [ -s installers.log ] && log=installers.log
+          bash .github/scripts/annotate-build-error.sh "$log" "Build Windows falhou"
