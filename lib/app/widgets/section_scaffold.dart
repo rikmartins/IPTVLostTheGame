@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'brand.dart';
+import 'profile_switcher.dart';
 import 'sync_indicator.dart';
 
 /// Cabeçalho comum às secções (título + estado da sincronização).
@@ -33,6 +34,8 @@ class SectionScaffold extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
+                  const ProfileSwitcher(),
+                  const SizedBox(width: 8),
                   const SyncIndicator(),
                 ],
               ),

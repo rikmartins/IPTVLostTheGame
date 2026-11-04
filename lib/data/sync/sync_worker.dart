@@ -32,6 +32,7 @@ class SyncRequest {
   const SyncRequest({
     required this.events,
     required this.databaseDirectory,
+    required this.databaseName,
     required this.credentials,
     required this.kinds,
     required this.epgPast,
@@ -40,6 +41,9 @@ class SyncRequest {
 
   final SendPort events;
   final String databaseDirectory;
+
+  /// Catálogo do perfil a sincronizar.
+  final String databaseName;
   final XtreamCredentials credentials;
   final Set<SyncKind> kinds;
 
@@ -62,7 +66,10 @@ Future<void> runSyncWorker(SyncRequest request) async {
   Isar? isar;
   XtreamApi? api;
   try {
-    isar = await AppDatabase.openInstance(request.databaseDirectory);
+    isar = await AppDatabase.openInstance(
+      request.databaseDirectory,
+      name: request.databaseName,
+    );
     api = XtreamApi(request.credentials);
     await _SyncWorker(isar, api, request, cancelToken).run();
   } finally {

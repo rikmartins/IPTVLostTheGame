@@ -38,7 +38,7 @@ final seriesItemProvider = Provider.autoDispose.family<TvSeries?, int>((
 /// para voltar à mesma série ser instantâneo.
 final seriesEpisodesProvider = FutureProvider.autoDispose
     .family<List<SeriesEpisode>, int>((ref, seriesId) async {
-      final credentials = ref.watch(sessionProvider).value;
+      final credentials = ref.watch(sessionProvider);
       if (credentials == null) return const [];
 
       final api = XtreamApi(credentials);

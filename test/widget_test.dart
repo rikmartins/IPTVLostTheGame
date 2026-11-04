@@ -2,21 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:iptv_app/app/app.dart';
+import 'package:iptv_app/app/profiles_controller.dart';
 import 'package:iptv_app/app/providers.dart';
-import 'package:iptv_app/app/session_controller.dart';
 import 'package:iptv_app/app/settings_controller.dart';
 import 'package:iptv_app/app/widgets/brand.dart';
 import 'package:iptv_app/data/local/models/account_info.dart';
 import 'package:iptv_app/data/local/models/app_settings.dart';
+import 'package:iptv_app/data/profiles/profile.dart';
 import 'package:iptv_app/data/remote/xtream/xtream_credentials.dart';
 import 'package:iptv_app/data/repositories/auth_repository.dart';
 
 // Sem cofre do sistema nem Isar: nenhum dos dois existe no `flutter test`.
-
-class _NoSession extends SessionController {
-  @override
-  Future<XtreamCredentials?> build() async => null;
-}
 
 class _FakeAuth implements AuthRepository {
   _FakeAuth([this.saved]);
@@ -27,21 +23,11 @@ class _FakeAuth implements AuthRepository {
   Future<XtreamCredentials?> remembered() async => saved;
 
   @override
-  Future<XtreamCredentials?> restore() async => null;
+  Future<void> setRemembered(XtreamCredentials? credentials) async {}
 
   @override
-  Future<void> forgetRemembered() async {}
-
-  @override
-  Future<void> logout() async {}
-
-  @override
-  Future<({XtreamCredentials credentials, AccountInfo account})> login({
-    required String server,
-    required String username,
-    required String password,
-    bool remember = true,
-  }) => throw UnimplementedError();
+  Future<AccountInfo> authenticate(XtreamCredentials credentials) =>
+      throw UnimplementedError();
 }
 
 class _MemorySettings extends SettingsController {
@@ -62,7 +48,8 @@ Future<void> _pumpApp(
     ProviderScope(
       overrides: [
         authRepositoryProvider.overrideWithValue(_FakeAuth(remembered)),
-        sessionProvider.overrideWith(_NoSession.new),
+        // Sem perfis: ecrã de login.
+        initialProfilesProvider.overrideWithValue(const ProfilesState()),
         settingsProvider.overrideWith(
           () => _MemorySettings(settings ?? AppSettings()),
         ),
@@ -85,7 +72,9 @@ void main() {
   testWidgets('login com campos vazios não chama o servidor', (tester) async {
     await _pumpApp(tester);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
+    final enter = find.widgetWithText(FilledButton, 'Entrar');
+    await tester.ensureVisible(enter);
+    await tester.tap(enter);
     await tester.pump();
 
     expect(find.text('Preenche todos os campos'), findsOneWidget);

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:isar_community/isar.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../core/config/app_config.dart';
@@ -150,7 +151,10 @@ class UpdateController extends Notifier<UpdateState> {
         // sincronização e fechar a base de dados antes de sair.
         await ref.read(syncServiceProvider).stop();
         await service.openInstaller(file);
-        await ref.read(isarProvider).close();
+        // Todas: a principal e o catálogo de cada perfil aberto.
+        for (final name in Isar.instanceNames) {
+          await Isar.getInstance(name)?.close();
+        }
         exit(0);
       }
 

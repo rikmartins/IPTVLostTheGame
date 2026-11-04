@@ -6,7 +6,7 @@ import 'providers.dart';
 class SettingsController extends Notifier<AppSettings> {
   @override
   AppSettings build() =>
-      ref.watch(isarProvider).settings.getSync(0) ?? AppSettings();
+      ref.watch(mainIsarProvider).settings.getSync(0) ?? AppSettings();
 
   void setBufferProfile(BufferProfile profile) =>
       _save((s) => s.bufferProfile = profile);
@@ -24,7 +24,7 @@ class SettingsController extends Notifier<AppSettings> {
       ..vpnWholeDevice = state.vpnWholeDevice;
     change(updated);
 
-    final isar = ref.read(isarProvider);
+    final isar = ref.read(mainIsarProvider);
     isar.writeTxnSync(() => isar.settings.putSync(updated));
     state = updated;
   }

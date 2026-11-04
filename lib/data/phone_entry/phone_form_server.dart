@@ -23,12 +23,19 @@ class PhoneField {
     this.label, {
     this.type = PhoneFieldType.text,
     this.placeholder = '',
+    this.optional = false,
+    this.autocomplete = 'off',
   });
 
   final String name;
   final String label;
   final PhoneFieldType type;
   final String placeholder;
+  final bool optional;
+
+  /// Para campos de texto: "username" deixa o gestor de palavras-passe do
+  /// telemóvel preencher.
+  final String autocomplete;
 }
 
 @immutable
@@ -247,27 +254,29 @@ class PhoneFormServer {
       final id = _escape(field.name);
       final label = _escape(field.label);
       final placeholder = _escape(field.placeholder);
+      final required = field.optional ? '' : ' required';
       fields.write('<label for="$id">$label</label>');
       switch (field.type) {
         case PhoneFieldType.text:
           fields.write(
             '<input id="$id" name="$id" type="text" value="$value" '
-            'placeholder="$placeholder" autocomplete="username" '
-            'autocapitalize="none" autocorrect="off" spellcheck="false" '
-            'required>',
+            'placeholder="$placeholder" '
+            'autocomplete="${_escape(field.autocomplete)}" '
+            'autocapitalize="none" autocorrect="off" spellcheck="false"'
+            '$required>',
           );
         case PhoneFieldType.url:
           fields.write(
             '<input id="$id" name="$id" type="text" inputmode="url" '
             'value="$value" placeholder="$placeholder" autocomplete="url" '
-            'autocapitalize="none" autocorrect="off" spellcheck="false" '
-            'required>',
+            'autocapitalize="none" autocorrect="off" spellcheck="false"'
+            '$required>',
           );
         case PhoneFieldType.password:
           fields.write(
             '<input id="$id" name="$id" type="password" '
-            'placeholder="$placeholder" autocomplete="current-password" '
-            'required>'
+            'placeholder="$placeholder" autocomplete="current-password"'
+            '$required>'
             '<label class="inline"><input type="checkbox" '
             'onchange="document.getElementById(\'$id\').type='
             'this.checked?\'text\':\'password\'"> Mostrar</label>',
@@ -282,7 +291,7 @@ class PhoneFormServer {
             '<p class="hint">Escolhe o ficheiro .conf ou cola o conteúdo:</p>'
             '<textarea id="$id" name="$id" rows="10" '
             'placeholder="$placeholder" autocapitalize="none" '
-            'autocorrect="off" spellcheck="false" required></textarea>',
+            'autocorrect="off" spellcheck="false"$required></textarea>',
           );
       }
     }

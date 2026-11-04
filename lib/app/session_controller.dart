@@ -2,63 +2,48 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/remote/xtream/xtream_credentials.dart';
 import '../data/remote/xtream/xtream_stream_urls.dart';
-import 'providers.dart';
+import 'profiles_controller.dart';
 import 'sync_controller.dart';
 
-/// Sessão Xtream atual; `null` = sem login.
+/// Credenciais do perfil ativo; `null` = sem perfil (ecrã de login).
 ///
-/// Offline-first: com uma sessão guardada a app abre logo com o que está no
-/// Isar e a sincronização corre por trás.
-class SessionController extends AsyncNotifier<XtreamCredentials?> {
+/// Offline-first: a app abre logo com o catálogo que está no Isar e o que
+/// estiver desatualizado sincroniza por trás, também ao mudar de perfil.
+class SessionController extends Notifier<XtreamCredentials?> {
   @override
-  Future<XtreamCredentials?> build() async {
-    final credentials = await ref.read(authRepositoryProvider).restore();
-    if (credentials != null) {
-      ref.read(syncControllerProvider.notifier).syncIfStale(credentials);
+  XtreamCredentials? build() {
+    // Só o perfil e as credenciais: mudar o nome não volta a sincronizar.
+    ref.watch(
+      profilesProvider.select((s) => (s.activeId, s.active?.credentials)),
+    );
+    final profile = ref.read(profilesProvider).active;
+    if (profile != null) {
+      // Depois do build: o isarProvider já aponta para este perfil.
+      Future.microtask(
+        () => ref.read(syncControllerProvider.notifier).syncIfStale(profile),
+      );
     }
-    return credentials;
-  }
-
-  /// Lança `XtreamException` com a mensagem a mostrar no ecrã de login.
-  Future<void> login({
-    required String server,
-    required String username,
-    required String password,
-    bool remember = true,
-  }) async {
-    final result = await ref
-        .read(authRepositoryProvider)
-        .login(
-          server: server,
-          username: username,
-          password: password,
-          remember: remember,
-        );
-    state = AsyncData(result.credentials);
-    ref.read(syncControllerProvider.notifier).syncNow(result.credentials);
+    return profile?.credentials;
   }
 
   Future<void> refresh() async {
-    final credentials = state.value;
-    if (credentials == null) return;
-    await ref.read(syncControllerProvider.notifier).syncNow(credentials);
+    final profile = ref.read(profilesProvider).active;
+    if (profile == null) return;
+    await ref.read(syncControllerProvider.notifier).syncNow(profile);
   }
 
+  /// Terminar sessão = remover o perfil ativo deste dispositivo.
   Future<void> logout() async {
-    // Primeiro parar o isolate, para não ficar um lote escrito depois do
-    // clear.
-    await ref.read(syncServiceProvider).stop();
-    await ref.read(authRepositoryProvider).logout();
-    state = const AsyncData(null);
+    final id = ref.read(profilesProvider).activeId;
+    if (id != null) await ref.read(profilesProvider.notifier).remove(id);
   }
 }
 
-final sessionProvider =
-    AsyncNotifierProvider<SessionController, XtreamCredentials?>(
-      SessionController.new,
-    );
+final sessionProvider = NotifierProvider<SessionController, XtreamCredentials?>(
+  SessionController.new,
+);
 
 final streamUrlsProvider = Provider<XtreamStreamUrls?>((ref) {
-  final credentials = ref.watch(sessionProvider).value;
+  final credentials = ref.watch(sessionProvider);
   return credentials == null ? null : XtreamStreamUrls(credentials);
 });

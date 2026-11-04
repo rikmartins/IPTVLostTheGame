@@ -5,6 +5,7 @@ import '../core/database/app_database.dart';
 import '../data/local/models/sync_state.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/sync/xtream_sync_service.dart';
+import 'profiles_controller.dart';
 
 /// Aberto em `main()` antes do `runApp`, para que nenhum ecrã tenha de
 /// esperar pela base de dados.
@@ -12,12 +13,31 @@ final appDatabaseProvider = Provider<AppDatabase>(
   (ref) => throw UnimplementedError('Sobreposto no ProviderScope em main()'),
 );
 
-final isarProvider = Provider<Isar>(
+/// Base principal: definições do dispositivo (iguais em todos os perfis).
+final mainIsarProvider = Provider<Isar>(
   (ref) => ref.watch(appDatabaseProvider).isar,
 );
 
+/// Catálogo do perfil ativo. Muda ao trocar de perfil, e tudo o que lê o
+/// catálogo reconstrói-se com ele. Sem perfil, a base principal (vazia).
+final isarProvider = Provider<Isar>((ref) {
+  final database = ref.watch(appDatabaseProvider);
+  final name = ref.watch(
+    profilesProvider.select((s) => s.active?.databaseName),
+  );
+  if (name == null || name == AppDatabase.instanceName) return database.isar;
+  // O controlador abre a base antes de ativar o perfil; o openSync é só
+  // uma rede de segurança.
+  return Isar.getInstance(name) ??
+      Isar.openSync(
+        AppDatabase.schemas,
+        directory: database.directory,
+        name: name,
+      );
+});
+
 final authRepositoryProvider = Provider<AuthRepository>(
-  (ref) => AuthRepository(ref.watch(isarProvider)),
+  (ref) => AuthRepository(),
 );
 
 final syncServiceProvider = Provider<XtreamSyncService>((ref) {

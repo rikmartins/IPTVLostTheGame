@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/profiles_controller.dart';
 import '../../app/providers.dart';
-import '../../app/session_controller.dart';
 import '../../app/widgets/brand.dart';
 import '../../core/config/app_config.dart';
 import '../../data/phone_entry/phone_form_server.dart';
@@ -21,12 +21,18 @@ const _phoneForm = PhoneForm(
   intro: 'Dados Xtream Codes do teu fornecedor de IPTV.',
   fields: [
     PhoneField(
+      'name',
+      'Nome do perfil (opcional)',
+      placeholder: 'Ex.: IPTV X',
+      optional: true,
+    ),
+    PhoneField(
       'server',
       'Servidor',
       type: PhoneFieldType.url,
       placeholder: 'http://exemplo.com:8080',
     ),
-    PhoneField('username', 'Utilizador'),
+    PhoneField('username', 'Utilizador', autocomplete: 'username'),
     PhoneField('password', 'Palavra-passe', type: PhoneFieldType.password),
   ],
   submitLabel: 'Entrar',
@@ -34,13 +40,18 @@ const _phoneForm = PhoneForm(
 );
 
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+  /// [addingProfile]: aberto a partir das definições para juntar outra
+  /// conta; tem botão para voltar e fecha-se depois de entrar.
+  const LoginScreen({super.key, this.addingProfile = false});
+
+  final bool addingProfile;
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
+  final _name = TextEditingController();
   final _server = TextEditingController();
   final _username = TextEditingController();
   final _password = TextEditingController();
@@ -54,11 +65,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    _fillRemembered();
+    // Ao juntar outro perfil, os memorizados seriam os do perfil atual.
+    if (!widget.addingProfile) _fillRemembered();
   }
 
   @override
   void dispose() {
+    _name.dispose();
     _server.dispose();
     _username.dispose();
     _password.dispose();
@@ -92,14 +105,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
     try {
       await ref
-          .read(sessionProvider.notifier)
-          .login(
+          .read(profilesProvider.notifier)
+          .signIn(
+            name: _name.text,
             server: _server.text,
             username: _username.text,
             password: _password.text,
             remember: _remember,
           );
-      // Sucesso: a app troca para a grelha sozinha (ver IptvApp).
+      // Sucesso: a app troca para a grelha do perfil sozinha (ver IptvApp).
+      if (widget.addingProfile && mounted) Navigator.of(context).pop();
       return null;
     } on XtreamException catch (e) {
       return e.message;
@@ -121,6 +136,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) return 'A app fechou o ecrã de login.';
     if (_busy) return 'Já está a iniciar sessão. Aguarda.';
     setState(() {
+      _name.text = values['name'] ?? '';
       _server.text = values['server'] ?? '';
       _username.text = values['username'] ?? '';
       _password.text = values['password'] ?? '';
@@ -140,18 +156,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Center(child: BrandLogo()),
-          const SizedBox(height: 16),
+          if (!widget.addingProfile) ...[
+            const Center(child: BrandLogo()),
+            const SizedBox(height: 16),
+          ],
           Text(
-            'Inicia sessão com os dados Xtream Codes do teu fornecedor.',
+            widget.addingProfile
+                ? 'Junta outra conta Xtream Codes. Cada perfil tem a sua '
+                      'lista e mudas de um para o outro nas definições.'
+                : 'Inicia sessão com os dados Xtream Codes do teu fornecedor.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(color: muted),
           ),
           const SizedBox(height: 28),
           TextField(
-            controller: _server,
+            controller: _name,
             // Na TV, focar um campo abre logo o teclado por cima do QR.
             autofocus: !isAndroidTvBuild,
+            enabled: !_busy,
+            textInputAction: TextInputAction.next,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              labelText: 'Nome do perfil (opcional)',
+              hintText: 'Ex.: IPTV X',
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _server,
             enabled: !_busy,
             keyboardType: TextInputType.url,
             textInputAction: TextInputAction.next,
@@ -247,6 +279,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final wide = MediaQuery.sizeOf(context).width >= 820;
 
     return Scaffold(
+      appBar: widget.addingProfile
+          ? AppBar(title: const Text('Novo perfil'))
+          : null,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),

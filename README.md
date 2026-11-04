@@ -35,6 +35,9 @@ Cliente IPTV (Xtream Codes) em Flutter para Android, Android TV e Windows.
 
 - Catálogo (canais, filmes, séries e guia TV) sincronizado para uma base de
   dados local (Isar) num isolate próprio; a interface lê só daí.
+- Vários perfis (por exemplo *IPTV X* e *IPTV Y*), cada um com a sua lista
+  guardada no dispositivo: mudar de perfil é imediato. Em
+  **Definições → Perfis**, ou no nome do perfil no topo de cada secção.
 - Reprodução com media_kit (libmpv) e perfis de pré-buffer
   (Rápido / Normal / Estável).
 - VPN pessoal WireGuard a partir de um ficheiro `.conf` (Android e

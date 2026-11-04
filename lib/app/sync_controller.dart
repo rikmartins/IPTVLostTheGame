@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/local/models/sync_state.dart';
-import '../data/remote/xtream/xtream_credentials.dart';
+import '../data/profiles/profile.dart';
 import '../data/sync/sync_progress.dart';
 import 'providers.dart';
 
@@ -34,7 +34,7 @@ class SyncController extends Notifier<SyncActivity> {
   /// No arranque: atualiza só o que tiver mais de [maxAge] (como o "update
   /// on app start" do TiviMate), para não descarregar tudo a cada abertura.
   Future<void> syncIfStale(
-    XtreamCredentials credentials, {
+    Profile profile, {
     Duration maxAge = const Duration(hours: 12),
   }) {
     final states = ref.read(isarProvider).syncStates;
@@ -46,16 +46,22 @@ class SyncController extends Notifier<SyncActivity> {
           kind,
     };
     if (stale.isEmpty) return Future.value();
-    return _start(credentials, stale);
+    return _start(profile, stale);
   }
 
-  Future<void> syncNow(XtreamCredentials credentials) =>
-      _start(credentials, {...SyncKind.values});
+  Future<void> syncNow(Profile profile) =>
+      _start(profile, {...SyncKind.values});
 
-  Future<void> _start(XtreamCredentials credentials, Set<SyncKind> kinds) async {
+  Future<void> _start(Profile profile, Set<SyncKind> kinds) async {
     state = const SyncActivity();
     try {
-      await ref.read(syncServiceProvider).start(credentials, kinds: kinds);
+      await ref
+          .read(syncServiceProvider)
+          .start(
+            profile.credentials,
+            databaseName: profile.databaseName,
+            kinds: kinds,
+          );
     } catch (e) {
       // Só chega aqui se o próprio isolate rebentar; as falhas por etapa
       // vêm como eventos de progresso.

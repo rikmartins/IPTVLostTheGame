@@ -31,6 +31,7 @@ class XtreamSyncService {
   /// Completa quando o isolate termina.
   Future<void> start(
     XtreamCredentials credentials, {
+    required String databaseName,
     Set<SyncKind> kinds = const {...SyncKind.values},
     Duration epgPast = const Duration(days: 1),
     Duration epgFuture = const Duration(days: 3),
@@ -39,6 +40,7 @@ class XtreamSyncService {
       (events) => SyncRequest(
         events: events,
         databaseDirectory: databaseDirectory,
+        databaseName: databaseName,
         credentials: credentials,
         kinds: kinds,
         epgPast: epgPast,

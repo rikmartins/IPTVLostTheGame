@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/profiles_controller.dart';
 import '../../app/providers.dart';
 import '../../app/session_controller.dart';
 import '../../app/settings_controller.dart';
@@ -14,6 +15,7 @@ import '../../data/local/models/app_settings.dart';
 import '../../data/local/models/sync_state.dart';
 import '../player/buffer_profiles.dart';
 import 'widgets/app_update_section.dart';
+import 'widgets/profiles_section.dart';
 import 'widgets/settings_tiles.dart';
 import 'widgets/vpn_section.dart';
 
@@ -41,6 +43,8 @@ class SettingsScreen extends ConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.symmetric(vertical: 8),
             children: [
+              const SettingsSectionTitle('Perfis'),
+              const ProfilesSection(),
               const SettingsSectionTitle('Aparência'),
               RadioGroup<ThemePreference>(
                 groupValue: settings.theme,
@@ -128,7 +132,12 @@ class SettingsScreen extends ConsumerWidget {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: OutlinedButton.icon(
-                    onPressed: () => _confirmLogout(context, ref),
+                    onPressed: () {
+                      final active = ref.read(profilesProvider).active;
+                      if (active != null) {
+                        confirmRemoveProfile(context, ref, active);
+                      }
+                    },
                     icon: const Icon(Icons.logout),
                     label: const Text('Terminar sessão'),
                   ),
@@ -139,33 +148,6 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Terminar sessão?'),
-        content: const Text(
-          'A lista de canais, filmes, séries e o guia são apagados deste '
-          'dispositivo. As definições e os dados de acesso memorizados '
-          'mantêm-se.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Terminar sessão'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      await ref.read(sessionProvider.notifier).logout();
-    }
   }
 }
 
