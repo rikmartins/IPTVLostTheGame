@@ -1,0 +1,55 @@
+name: iptv_app
+description: Cliente IPTV multiplataforma (Xtream Codes) focado em desempenho.
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  # Flutter 3.47.9 (stable, 29/10/2026) traz o Dart 3.13.7.
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # --- Base de dados local -------------------------------------------------
+  # Fork mantido do Isar 3 (o pacote `isar` original está parado desde 2023,
+  # não suporta Dart 3 oficialmente e falha com AGP 8+). API idêntica.
+  # Versão fixa: tem de coincidir exatamente com o gerador.
+  isar_community: 3.4.1
+  isar_community_flutter_libs: 3.4.1
+
+  # --- Rede ----------------------------------------------------------------
+  dio: ^5.11.1
+  xml: ^7.1.0 # parser XMLTV em streaming (EPG)
+
+  # --- Vídeo (libmpv) ------------------------------------------------------
+  media_kit: ^1.2.6
+  media_kit_video: ^2.0.1
+  media_kit_libs_video: ^1.0.7
+
+  # --- VPN -----------------------------------------------------------------
+  # Fork mantido do `wireguard_flutter` (parado desde 2024); suporta
+  # Android, iOS, macOS e Windows.
+  wireguard_flutter_plus: ^1.0.9
+
+  # --- Estado e utilitários ------------------------------------------------
+  flutter_riverpod: ^3.4.3
+  path_provider: ^2.1.6
+  flutter_secure_storage: ^11.2.0
+  package_info_plus: 10.2.2
+  url_launcher: 6.3.3
+  open_filex: 5.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # O isar_community_generator 3.4.1 exige `build ^4`; o build_runner 2.17.1
+  # já salta para `build 5`, por isso fica fixo no 2.17.0.
+  build_runner: 2.16.2
+  isar_community_generator: 3.4.1
+
+flutter:
+  uses-material-design: true

@@ -1,0 +1,154 @@
+# Publica uma release a cada tag vX.Y.Z:
+#
+#   git tag v0.2.0 && git push origin v0.2.0
+#
+# A versão da app vem da tag (não é preciso mexer no pubspec) e o número de
+# build do número da execução, que só sobe: o Android exige versionCode
+# crescente para aceitar a atualização.
+#
+# Tags com hífen (v0.2.0-beta.1) saem como pré-release: o
+# `releases/latest` que a app consulta ignora-as, por isso servem para testar
+# sem chegar aos utilizadores.
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: '3.47.9'
+
+jobs:
+  android:
+    name: APKs Android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Versão a partir da tag
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      # Sem a chave real o build pára: um APK assinado com outra chave não
+      # atualiza a app instalada e obrigaria os utilizadores a desinstalar.
+      - name: Chave de assinatura
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::error::Faltam os secrets ANDROID_KEYSTORE_BASE64 e ANDROID_KEYSTORE_PASSWORD (ver tool/setup_android_signing.ps1)."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/upload-keystore.p12
+          {
+            echo "storeFile=upload-keystore.p12"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyPassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=upload"
+          } > android/key.properties
+
+      - run: flutter pub get
+
+      # Um APK por arquitetura (~3x mais pequeno que o universal); a app
+      # escolhe o do dispositivo.
+      - name: Build
+        run: >-
+          flutter build apk --release --split-per-abi
+          --build-name="$VERSION"
+          --build-number="${{ github.run_number }}"
+
+      - name: Nomes finais
+        run: |
+          mkdir -p dist
+          for abi in arm64-v8a armeabi-v7a x86_64; do
+            cp "build/app/outputs/flutter-apk/app-$abi-release.apk" "dist/IPTV-$VERSION-$abi.apk"
+          done
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: android
+          path: dist/*.apk
+          if-no-files-found: error
+
+  windows:
+    name: Instalador Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Versão a partir da tag
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - run: flutter pub get
+
+      - name: Build
+        run: >-
+          flutter build windows --release
+          --build-name=${{ env.VERSION }}
+          --build-number=${{ github.run_number }}
+
+      # As apps Flutter para Windows precisam do runtime do Visual C++; ir
+      # com ele evita o erro "VCRUNTIME140.dll em falta" em PCs sem o
+      # redistribuível instalado.
+      - name: Runtime do Visual C++
+        shell: pwsh
+        run: |
+          $out = "build\windows\x64\runner\Release"
+          foreach ($dll in "msvcp140.dll", "vcruntime140.dll", "vcruntime140_1.dll") {
+            Copy-Item "$env:WINDIR\System32\$dll" $out
+          }
+
+      - name: Instalador (Inno Setup)
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          $iscc = Get-ChildItem "${env:ProgramFiles(x86)}\Inno Setup*\ISCC.exe", "$env:ProgramFiles\Inno Setup*\ISCC.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $iscc) { throw "ISCC.exe não encontrado" }
+          & $iscc.FullName "/DAppVersion=$env:VERSION" windows\installer\iptv.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC falhou ($LASTEXITCODE)" }
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows
+          path: build/installer/*.exe
+          if-no-files-found: error
+
+  release:
+    name: Publicar release
+    needs: [android, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: dist/*
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          fail_on_unmatched_files: true

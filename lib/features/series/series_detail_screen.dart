@@ -1,0 +1,221 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../app/session_controller.dart';
+import '../../data/local/models/tv_series.dart';
+import '../../data/remote/xtream/series_episode.dart';
+import '../../data/remote/xtream/xtream_exception.dart';
+import '../catalog/widgets/artwork.dart';
+import '../player/player_screen.dart';
+import 'series_providers.dart';
+
+class SeriesDetailScreen extends ConsumerStatefulWidget {
+  const SeriesDetailScreen({super.key, required this.seriesId});
+
+  final int seriesId;
+
+  @override
+  ConsumerState<SeriesDetailScreen> createState() =>
+      _SeriesDetailScreenState();
+}
+
+class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
+  int? _season;
+
+  @override
+  Widget build(BuildContext context) {
+    // Cabeçalho vem do Isar (instantâneo); só os episódios vêm da rede.
+    final series = ref.watch(seriesItemProvider(widget.seriesId));
+    final episodes = ref.watch(seriesEpisodesProvider(widget.seriesId));
+
+    return Scaffold(
+      appBar: AppBar(title: Text(series?.name ?? '')),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        children: [
+          if (series != null) _Header(series: series),
+          const SizedBox(height: 24),
+          ...switch (episodes) {
+            AsyncData(:final value) => _episodeSection(value),
+            AsyncError(:final error) => [
+              _LoadError(
+                message: error is XtreamException
+                    ? error.message
+                    : 'Não foi possível carregar os episódios',
+                onRetry: () =>
+                    ref.invalidate(seriesEpisodesProvider(widget.seriesId)),
+              ),
+            ],
+            _ => [
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 32),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ],
+          },
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _episodeSection(List<SeriesEpisode> episodes) {
+    if (episodes.isEmpty) {
+      return const [
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 32),
+          child: Center(child: Text('Sem episódios disponíveis')),
+        ),
+      ];
+    }
+
+    final seasons = episodes.map((e) => e.season).toSet().toList()..sort();
+    final season = seasons.contains(_season) ? _season! : seasons.first;
+    final inSeason = episodes.where((e) => e.season == season).toList();
+
+    return [
+      if (seasons.length > 1)
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final s in seasons)
+              ChoiceChip(
+                label: Text(s == 0 ? 'Extras' : 'Temporada $s'),
+                selected: s == season,
+                showCheckmark: false,
+                onSelected: (_) => setState(() => _season = s),
+              ),
+          ],
+        ),
+      const SizedBox(height: 8),
+      for (final episode in inSeason)
+        _EpisodeTile(episode: episode, onTap: () => _play(episode)),
+    ];
+  }
+
+  void _play(SeriesEpisode episode) {
+    final urls = ref.read(streamUrlsProvider);
+    if (urls == null) return;
+    final seriesName = ref.read(seriesItemProvider(widget.seriesId))?.name;
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PlayerScreen.vod(
+          title: [
+            ?seriesName,
+            'T${episode.season}E${episode.number}',
+          ].join(' · '),
+          url: urls.episode(episode.id, episode.containerExtension),
+        ),
+      ),
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header({required this.series});
+
+  final TvSeries series;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final details = [
+      ?series.genre,
+      ?series.releaseDate,
+      if (series.rating > 0) '★ ${series.rating.toStringAsFixed(1)}',
+    ];
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 120,
+          height: 180,
+          child: Poster(url: series.cover, title: series.name),
+        ),
+        const SizedBox(width: 20),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(series.name, style: theme.textTheme.titleLarge),
+              if (details.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  details.join('  ·  '),
+                  style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                ),
+              ],
+              if (series.plot != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  series.plot!,
+                  maxLines: 6,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EpisodeTile extends StatelessWidget {
+  const _EpisodeTile({required this.episode, required this.onTap});
+
+  final SeriesEpisode episode;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      leading: SizedBox(
+        width: 36,
+        child: Text(
+          '${episode.number}',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: muted,
+          ),
+        ),
+      ),
+      title: Text(episode.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: episode.duration == null ? null : Text(episode.duration!),
+      trailing: const Icon(Icons.play_arrow_rounded),
+      onTap: onTap,
+    );
+  }
+}
+
+class _LoadError extends StatelessWidget {
+  const _LoadError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Column(
+        children: [
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: onRetry,
+            child: const Text('Tentar de novo'),
+          ),
+        ],
+      ),
+    );
+  }
+}
