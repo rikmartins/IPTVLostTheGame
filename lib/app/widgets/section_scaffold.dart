@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'brand.dart';
 import 'sync_indicator.dart';
 
 /// Cabeçalho comum às secções (título + estado da sincronização).
@@ -20,6 +21,11 @@ class SectionScaffold extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
+                  // No telemóvel não há barra lateral com o logo.
+                  if (MediaQuery.sizeOf(context).width < 720) ...[
+                    const BrandIcon(size: 30),
+                    const SizedBox(width: 12),
+                  ],
                   Text(
                     title,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(

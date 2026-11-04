@@ -77,8 +77,9 @@ class PosterTile extends StatelessWidget {
                       top: 6,
                       right: 6,
                       child: DecoratedBox(
+                        // Acento castanho do logo ("LOST").
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.7),
+                          color: theme.colorScheme.tertiaryContainer,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Padding(
@@ -89,7 +90,7 @@ class PosterTile extends StatelessWidget {
                           child: Text(
                             rating.toStringAsFixed(1),
                             style: theme.textTheme.labelSmall?.copyWith(
-                              color: Colors.white,
+                              color: theme.colorScheme.onTertiaryContainer,
                               fontWeight: FontWeight.w600,
                             ),
                           ),

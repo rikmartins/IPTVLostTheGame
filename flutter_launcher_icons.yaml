@@ -1,0 +1,20 @@
+# Ícones da app gerados a partir do logo (tool/branding/*.png):
+#   dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "tool/branding/icon_1024.png"
+
+  android: true
+  # Ícone adaptativo: o desenho desvanece para o fundo cor de papel do logo,
+  # por isso qualquer máscara (círculo, squircle...) fica limpa.
+  adaptive_icon_background: "#F5F4EE"
+  adaptive_icon_foreground: "tool/branding/icon_foreground_1024.png"
+
+  ios: true
+  remove_alpha_ios: true
+
+  windows:
+    generate: true
+    icon_size: 256
+
+  macos:
+    generate: true

@@ -4,6 +4,7 @@ import '../features/live_tv/live_tv_screen.dart';
 import '../features/series/series_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/vod/movies_screen.dart';
+import 'widgets/brand.dart';
 
 /// Navegação principal: TV, Filmes, Séries e Definições.
 ///
@@ -73,6 +74,10 @@ class _HomeShellState extends State<HomeShell> {
                 onDestinationSelected: _select,
                 labelType: NavigationRailLabelType.all,
                 groupAlignment: -0.9,
+                leading: const Padding(
+                  padding: EdgeInsets.only(top: 8, bottom: 12),
+                  child: BrandIcon(),
+                ),
                 destinations: [
                   for (final s in _sections)
                     NavigationRailDestination(

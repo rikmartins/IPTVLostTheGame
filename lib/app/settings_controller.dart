@@ -8,9 +8,20 @@ class SettingsController extends Notifier<AppSettings> {
   AppSettings build() =>
       ref.watch(isarProvider).settings.getSync(0) ?? AppSettings();
 
-  void setBufferProfile(BufferProfile profile) {
+  void setBufferProfile(BufferProfile profile) =>
+      _save((s) => s.bufferProfile = profile);
+
+  void setTheme(ThemePreference theme) => _save((s) => s.theme = theme);
+
+  /// Copia o estado atual antes de mudar um campo: um `AppSettings()` novo
+  /// repunha os outros campos nos valores por omissão.
+  void _save(void Function(AppSettings settings) change) {
+    final updated = AppSettings()
+      ..bufferProfile = state.bufferProfile
+      ..theme = state.theme;
+    change(updated);
+
     final isar = ref.read(isarProvider);
-    final updated = AppSettings()..bufferProfile = profile;
     isar.writeTxnSync(() => isar.settings.putSync(updated));
     state = updated;
   }

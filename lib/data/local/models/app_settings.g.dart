@@ -23,6 +23,12 @@ const AppSettingsSchema = CollectionSchema(
       type: IsarType.byte,
       enumMap: _AppSettingsbufferProfileEnumValueMap,
     ),
+    r'theme': PropertySchema(
+      id: 1,
+      name: r'theme',
+      type: IsarType.byte,
+      enumMap: _AppSettingsthemeEnumValueMap,
+    ),
   },
 
   estimateSize: _appSettingsEstimateSize,
@@ -56,6 +62,7 @@ void _appSettingsSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeByte(offsets[0], object.bufferProfile.index);
+  writer.writeByte(offsets[1], object.theme.index);
 }
 
 AppSettings _appSettingsDeserialize(
@@ -71,6 +78,9 @@ AppSettings _appSettingsDeserialize(
       )] ??
       BufferProfile.fast;
   object.id = id;
+  object.theme =
+      _AppSettingsthemeValueEnumMap[reader.readByteOrNull(offsets[1])] ??
+      ThemePreference.light;
   return object;
 }
 
@@ -87,6 +97,10 @@ P _appSettingsDeserializeProp<P>(
               )] ??
               BufferProfile.fast)
           as P;
+    case 1:
+      return (_AppSettingsthemeValueEnumMap[reader.readByteOrNull(offset)] ??
+              ThemePreference.light)
+          as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -101,6 +115,12 @@ const _AppSettingsbufferProfileValueEnumMap = {
   0: BufferProfile.fast,
   1: BufferProfile.normal,
   2: BufferProfile.stable,
+};
+const _AppSettingsthemeEnumValueMap = {'light': 0, 'dark': 1, 'system': 2};
+const _AppSettingsthemeValueEnumMap = {
+  0: ThemePreference.light,
+  1: ThemePreference.dark,
+  2: ThemePreference.system,
 };
 
 Id _appSettingsGetId(AppSettings object) {
@@ -316,6 +336,63 @@ extension AppSettingsQueryFilter
       );
     });
   }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition> themeEqualTo(
+    ThemePreference value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'theme', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  themeGreaterThan(ThemePreference value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'theme',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition> themeLessThan(
+    ThemePreference value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'theme',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition> themeBetween(
+    ThemePreference lower,
+    ThemePreference upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'theme',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
 }
 
 extension AppSettingsQueryObject
@@ -336,6 +413,18 @@ extension AppSettingsQuerySortBy
   sortByBufferProfileDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'bufferProfile', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByTheme() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'theme', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByThemeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'theme', Sort.desc);
     });
   }
 }
@@ -366,6 +455,18 @@ extension AppSettingsQuerySortThenBy
       return query.addSortBy(r'id', Sort.desc);
     });
   }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByTheme() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'theme', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByThemeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'theme', Sort.desc);
+    });
+  }
 }
 
 extension AppSettingsQueryWhereDistinct
@@ -373,6 +474,12 @@ extension AppSettingsQueryWhereDistinct
   QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByBufferProfile() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'bufferProfile');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByTheme() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'theme');
     });
   }
 }
@@ -389,6 +496,12 @@ extension AppSettingsQueryProperty
   bufferProfileProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'bufferProfile');
+    });
+  }
+
+  QueryBuilder<AppSettings, ThemePreference, QQueryOperations> themeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'theme');
     });
   }
 }

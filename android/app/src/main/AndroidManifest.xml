@@ -20,7 +20,7 @@
     <!-- usesCleartextTraffic: a grande maioria dos painéis Xtream serve
          API e streams em http://, bloqueado por omissão desde o Android 9. -->
     <application
-        android:label="IPTV"
+        android:label="Lost the Game"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">

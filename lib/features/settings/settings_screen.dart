@@ -5,6 +5,7 @@ import '../../app/providers.dart';
 import '../../app/session_controller.dart';
 import '../../app/settings_controller.dart';
 import '../../app/sync_controller.dart';
+import '../../app/theme.dart';
 import '../../app/widgets/section_scaffold.dart';
 import '../../app/widgets/sync_indicator.dart';
 import '../../core/utils/time_format.dart';
@@ -39,6 +40,23 @@ class SettingsScreen extends ConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.symmetric(vertical: 8),
             children: [
+              const SettingsSectionTitle('Aparência'),
+              RadioGroup<ThemePreference>(
+                groupValue: settings.theme,
+                onChanged: (theme) {
+                  if (theme == null) return;
+                  ref.read(settingsProvider.notifier).setTheme(theme);
+                },
+                child: Column(
+                  children: [
+                    for (final theme in ThemePreference.values)
+                      RadioListTile<ThemePreference>(
+                        value: theme,
+                        title: Text(theme.label),
+                      ),
+                  ],
+                ),
+              ),
               const SettingsSectionTitle('Reprodução'),
               const SettingsHint(
                 'Pré-buffer (network cache): quanto vídeo o player acumula '

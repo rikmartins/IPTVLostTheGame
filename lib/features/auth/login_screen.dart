@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/session_controller.dart';
+import '../../app/widgets/brand.dart';
 import '../../data/remote/xtream/xtream_exception.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -74,18 +75,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'IPTV',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
+                  const Center(child: BrandLogo()),
+                  const SizedBox(height: 16),
                   Text(
                     'Inicia sessão com os dados Xtream Codes do teu fornecedor.',
+                    textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(color: muted),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
                   TextField(
                     controller: _server,
                     autofocus: true,

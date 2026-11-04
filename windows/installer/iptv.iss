@@ -5,7 +5,7 @@
 #ifndef AppVersion
   #define AppVersion "0.0.0"
 #endif
-#define AppName "IPTV"
+#define AppName "Lost the Game"
 #define AppExe "iptv_app.exe"
 
 [Setup]
