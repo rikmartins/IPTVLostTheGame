@@ -41,6 +41,22 @@ android {
         versionName = flutter.versionName
     }
 
+    // Duas variantes com o mesmo applicationId (é a mesma app, com a mesma
+    // chave): "mobile" para telemóveis/tablets e "tv" para Android TV, que só
+    // muda o manifest (src/tv). A app sabe qual é pelo `appFlavor` e o
+    // atualizador descarrega sempre a mesma variante.
+    //   flutter run --flavor mobile
+    //   flutter build apk --flavor tv
+    flavorDimensions += "device"
+    productFlavors {
+        create("mobile") {
+            dimension = "device"
+        }
+        create("tv") {
+            dimension = "device"
+        }
+    }
+
     signingConfigs {
         if (keystorePropertiesFile.exists()) {
             create("release") {

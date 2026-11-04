@@ -62,6 +62,53 @@ void main() {
       );
     });
 
+    group('variante TV / telemóvel (formato publicado pelo workflow)', () {
+      final release = [
+        _asset('IPTV-0.2.0-android.apk'),
+        _asset('IPTV-0.2.0-android-tv.apk'),
+        _asset('IPTV-Setup-0.2.0.exe'),
+      ];
+
+      test('o telemóvel recebe o APK de telemóvel', () {
+        expect(
+          pickAsset(release, UpdatePlatform.android, androidAbi: 'arm64-v8a')
+              ?.name,
+          'IPTV-0.2.0-android.apk',
+        );
+      });
+
+      test('a TV recebe o APK de TV', () {
+        expect(
+          pickAsset(
+            release,
+            UpdatePlatform.android,
+            androidAbi: 'armeabi-v7a',
+            androidVariant: AndroidVariant.tv,
+          )?.name,
+          'IPTV-0.2.0-android-tv.apk',
+        );
+      });
+
+      test('o "tv" de "IPTV" não conta como variante TV', () {
+        expect(
+          pickAsset(
+            [_asset('IPTV-0.2.0-android.apk')],
+            UpdatePlatform.android,
+            androidVariant: AndroidVariant.tv,
+          ),
+          isNull,
+        );
+        expect(
+          pickAsset(
+            [_asset('iptv-androidtv.apk')],
+            UpdatePlatform.android,
+            androidVariant: AndroidVariant.tv,
+          )?.name,
+          'iptv-androidtv.apk',
+        );
+      });
+    });
+
     test('Android: reconhece nomes alternativos de ABI', () {
       // Convenção do LocalSend, encontrada num repositório real.
       final assets = [

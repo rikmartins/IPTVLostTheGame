@@ -66,6 +66,13 @@ class GithubRelease {
 
 enum UpdatePlatform { android, windows, macos, unsupported }
 
+/// Variante Android instalada (flavor do build).
+enum AndroidVariant { mobile, tv }
+
+/// "tv" como palavra própria no nome ("-tv", "androidtv"), para não
+/// apanhar o "tv" de "IPTV".
+final _tvApk = RegExp(r'(^|[^a-z])(android)?tv([^a-z]|$)');
+
 /// ABI → nomes que aparecem nos APKs (cada projeto usa os seus: o
 /// `--split-per-abi` do Flutter gera "arm64-v8a", outros usam "arm64v8",
 /// "arm32v7"...). A ordem importa: as variantes de 64 bits são testadas
@@ -79,8 +86,9 @@ const _androidAbiAliases = {
 
 /// Escolhe o ficheiro da release para esta plataforma, pela extensão:
 ///
-/// * Android: `.apk`. Com `flutter build apk --split-per-abi` há um por
-///   arquitetura; escolhe-se o do [androidAbi], senão o universal.
+/// * Android: `.apk` da mesma [androidVariant] (TV ou telemóvel), para a
+///   atualização nunca trocar uma pela outra. Se houver um por arquitetura
+///   (`--split-per-abi`), escolhe-se o do [androidAbi], senão o universal.
 /// * Windows: instalador `.exe` (de preferência com "setup"/"install" no
 ///   nome), senão `.msix`. Um `.zip` não serve: a app não se consegue
 ///   substituir a si própria enquanto corre.
@@ -89,6 +97,7 @@ ReleaseAsset? pickAsset(
   List<ReleaseAsset> assets,
   UpdatePlatform platform, {
   String? androidAbi,
+  AndroidVariant androidVariant = AndroidVariant.mobile,
 }) {
   List<ReleaseAsset> withExtension(String extension) => [
     for (final asset in assets)
@@ -97,7 +106,11 @@ ReleaseAsset? pickAsset(
 
   switch (platform) {
     case UpdatePlatform.android:
-      final apks = withExtension('.apk');
+      final wantTv = androidVariant == AndroidVariant.tv;
+      final apks = [
+        for (final apk in withExtension('.apk'))
+          if (_tvApk.hasMatch(apk.name.toLowerCase()) == wantTv) apk,
+      ];
       if (androidAbi != null) {
         for (final apk in apks) {
           if (_abiOf(apk.name) == androidAbi) return apk;

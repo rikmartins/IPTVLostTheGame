@@ -24,7 +24,7 @@ jobs:
       - run: flutter test
 
   android:
-    name: Build Android (debug)
+    name: Build Android (telemóvel e TV)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -38,4 +38,13 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter build apk --debug
+      - name: Build
+        run: |
+          set -o pipefail
+          for flavor in mobile tv; do
+            flutter build apk --debug --flavor "$flavor" 2>&1 | tee -a build.log
+          done
+      # Os logs só se veem com sessão iniciada; a anotação é pública.
+      - name: Erro do build no resumo
+        if: failure()
+        run: bash .github/scripts/annotate-build-error.sh build.log "Build Android falhou"

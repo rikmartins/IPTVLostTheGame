@@ -17,7 +17,12 @@ dart run build_runner build   # depois de mudar modelos em lib/data/local/models
 flutter analyze
 flutter test
 flutter run -d windows
+flutter run --flavor mobile   # Android (telemóvel/tablet)
+flutter run --flavor tv       # Android TV
 ```
+
+No Android há duas variantes (flavors) com o mesmo identificador: `mobile` e
+`tv`. Só o manifest muda (`android/app/src/tv`: launcher e banner da TV).
 
 ## Publicar uma versão
 
@@ -38,8 +43,16 @@ flutter run -d windows
    git push origin v0.2.0
    ```
 
-   O workflow `Release` compila os APKs (um por arquitetura) e o instalador
-   Windows, e publica a release. A versão da app vem da tag.
+   O workflow `Release` publica sempre três ficheiros (ou nenhum):
+
+   | Ficheiro | Para |
+   |---|---|
+   | `IPTV-X.Y.Z-android.apk` | telemóveis e tablets Android |
+   | `IPTV-X.Y.Z-android-tv.apk` | Android TV |
+   | `IPTV-Setup-X.Y.Z.exe` | Windows |
+
+   A versão da app vem da tag. O atualizador da app descarrega sempre a
+   mesma variante que está instalada.
 
    Tags com hífen (`v0.2.0-beta.1`) saem como pré-release e a app não as
    oferece como atualização.

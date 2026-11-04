@@ -2,6 +2,11 @@
 #
 #   git tag v0.2.0 && git push origin v0.2.0
 #
+# Cada release tem sempre os três ficheiros, ou não é publicada:
+#   IPTV-X.Y.Z-android.apk      telemóveis e tablets
+#   IPTV-X.Y.Z-android-tv.apk   Android TV
+#   IPTV-Setup-X.Y.Z.exe        Windows
+#
 # A versão da app vem da tag (não é preciso mexer no pubspec) e o número de
 # build do número da execução, que só sobe: o Android exige versionCode
 # crescente para aceitar a atualização.
@@ -66,20 +71,28 @@ jobs:
 
       - run: flutter pub get
 
-      # Um APK por arquitetura (~3x mais pequeno que o universal); a app
-      # escolhe o do dispositivo.
+      # Duas variantes (telemóvel e TV), cada uma num só APK ARM 32+64 bits:
+      # quem o descarrega à mão na TV não tem de saber a arquitetura.
       - name: Build
-        run: >-
-          flutter build apk --release --split-per-abi
-          --build-name="$VERSION"
-          --build-number="${{ github.run_number }}"
+        run: |
+          set -o pipefail
+          for flavor in mobile tv; do
+            flutter build apk --release --flavor "$flavor" \
+              --target-platform android-arm,android-arm64 \
+              --build-name="$VERSION" \
+              --build-number="${{ github.run_number }}" 2>&1 | tee -a build.log
+          done
 
+      - name: Erro do build no resumo
+        if: failure()
+        run: bash .github/scripts/annotate-build-error.sh build.log "Build Android falhou"
+
+      # Os nomes são o que o atualizador da app procura (ver pickAsset).
       - name: Nomes finais
         run: |
           mkdir -p dist
-          for abi in arm64-v8a armeabi-v7a x86_64; do
-            cp "build/app/outputs/flutter-apk/app-$abi-release.apk" "dist/IPTV-$VERSION-$abi.apk"
-          done
+          cp build/app/outputs/flutter-apk/app-mobile-release.apk "dist/IPTV-$VERSION-android.apk"
+          cp build/app/outputs/flutter-apk/app-tv-release.apk "dist/IPTV-$VERSION-android-tv.apk"
 
       - uses: actions/upload-artifact@v7
         with:
@@ -105,10 +118,17 @@ jobs:
       - run: flutter pub get
 
       - name: Build
-        run: >-
-          flutter build windows --release
-          --build-name=${{ env.VERSION }}
-          --build-number=${{ github.run_number }}
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter build windows --release \
+            --build-name="$VERSION" \
+            --build-number="${{ github.run_number }}" 2>&1 | tee build.log
+
+      - name: Erro do build no resumo
+        if: failure()
+        shell: bash
+        run: bash .github/scripts/annotate-build-error.sh build.log "Build Windows falhou"
 
       # As apps Flutter para Windows precisam do runtime do Visual C++; ir
       # com ele evita o erro "VCRUNTIME140.dll em falta" em PCs sem o
@@ -145,6 +165,17 @@ jobs:
         with:
           path: dist
           merge-multiple: true
+
+      - name: Confirmar os três ficheiros
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          for file in "IPTV-$VERSION-android.apk" "IPTV-$VERSION-android-tv.apk" "IPTV-Setup-$VERSION.exe"; do
+            if [ ! -f "dist/$file" ]; then
+              echo "::error::Falta $file: a release não é publicada incompleta."
+              exit 1
+            fi
+          done
+          ls -l dist
 
       - uses: softprops/action-gh-release@v3
         with:

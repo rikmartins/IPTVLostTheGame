@@ -109,6 +109,9 @@ class UpdateController extends Notifier<UpdateState> {
             release.assets,
             currentUpdatePlatform,
             androidAbi: currentAndroidAbi,
+            androidVariant: isAndroidTvBuild
+                ? AndroidVariant.tv
+                : AndroidVariant.mobile,
           ),
         );
       } else {
