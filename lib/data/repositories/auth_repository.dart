@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:isar_community/isar.dart';
 
+import '../../core/storage/secure_storage.dart';
 import '../local/models/account_info.dart';
 import '../local/models/epg_programme.dart';
 import '../local/models/live_channel.dart';
@@ -18,14 +19,7 @@ import '../remote/xtream/xtream_credentials.dart';
 /// As credenciais vão para o cofre do sistema (Keystore, Keychain,
 /// Credential Manager), nunca para o Isar.
 class AuthRepository {
-  AuthRepository(
-    this._isar, {
-    // No macOS, o keychain "data protection" exige Keychain Sharing e um
-    // provisioning profile; o keychain clássico chega e só tem efeito lá.
-    this._storage = const FlutterSecureStorage(
-      mOptions: MacOsOptions(usesDataProtectionKeychain: false),
-    ),
-  });
+  AuthRepository(this._isar, {this._storage = appSecureStorage});
 
   final Isar _isar;
   final FlutterSecureStorage _storage;

@@ -13,12 +13,15 @@ class SettingsController extends Notifier<AppSettings> {
 
   void setTheme(ThemePreference theme) => _save((s) => s.theme = theme);
 
+  void setVpnWholeDevice(bool value) => _save((s) => s.vpnWholeDevice = value);
+
   /// Copia o estado atual antes de mudar um campo: um `AppSettings()` novo
   /// repunha os outros campos nos valores por omissão.
   void _save(void Function(AppSettings settings) change) {
     final updated = AppSettings()
       ..bufferProfile = state.bufferProfile
-      ..theme = state.theme;
+      ..theme = state.theme
+      ..vpnWholeDevice = state.vpnWholeDevice;
     change(updated);
 
     final isar = ref.read(isarProvider);

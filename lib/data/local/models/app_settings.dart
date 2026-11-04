@@ -18,4 +18,8 @@ class AppSettings {
 
   @enumerated
   ThemePreference theme = ThemePreference.light;
+
+  /// Android: falso = só o tráfego desta app passa pela VPN. Fica pela
+  /// negativa porque os registos antigos leem `false`.
+  bool vpnWholeDevice = false;
 }

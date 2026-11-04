@@ -29,6 +29,11 @@ const AppSettingsSchema = CollectionSchema(
       type: IsarType.byte,
       enumMap: _AppSettingsthemeEnumValueMap,
     ),
+    r'vpnWholeDevice': PropertySchema(
+      id: 2,
+      name: r'vpnWholeDevice',
+      type: IsarType.bool,
+    ),
   },
 
   estimateSize: _appSettingsEstimateSize,
@@ -63,6 +68,7 @@ void _appSettingsSerialize(
 ) {
   writer.writeByte(offsets[0], object.bufferProfile.index);
   writer.writeByte(offsets[1], object.theme.index);
+  writer.writeBool(offsets[2], object.vpnWholeDevice);
 }
 
 AppSettings _appSettingsDeserialize(
@@ -81,6 +87,7 @@ AppSettings _appSettingsDeserialize(
   object.theme =
       _AppSettingsthemeValueEnumMap[reader.readByteOrNull(offsets[1])] ??
       ThemePreference.light;
+  object.vpnWholeDevice = reader.readBool(offsets[2]);
   return object;
 }
 
@@ -101,6 +108,8 @@ P _appSettingsDeserializeProp<P>(
       return (_AppSettingsthemeValueEnumMap[reader.readByteOrNull(offset)] ??
               ThemePreference.light)
           as P;
+    case 2:
+      return (reader.readBool(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -393,6 +402,15 @@ extension AppSettingsQueryFilter
       );
     });
   }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  vpnWholeDeviceEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'vpnWholeDevice', value: value),
+      );
+    });
+  }
 }
 
 extension AppSettingsQueryObject
@@ -425,6 +443,19 @@ extension AppSettingsQuerySortBy
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByThemeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'theme', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByVpnWholeDevice() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'vpnWholeDevice', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+  sortByVpnWholeDeviceDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'vpnWholeDevice', Sort.desc);
     });
   }
 }
@@ -467,6 +498,19 @@ extension AppSettingsQuerySortThenBy
       return query.addSortBy(r'theme', Sort.desc);
     });
   }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByVpnWholeDevice() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'vpnWholeDevice', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+  thenByVpnWholeDeviceDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'vpnWholeDevice', Sort.desc);
+    });
+  }
 }
 
 extension AppSettingsQueryWhereDistinct
@@ -480,6 +524,12 @@ extension AppSettingsQueryWhereDistinct
   QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByTheme() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'theme');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByVpnWholeDevice() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'vpnWholeDevice');
     });
   }
 }
@@ -502,6 +552,12 @@ extension AppSettingsQueryProperty
   QueryBuilder<AppSettings, ThemePreference, QQueryOperations> themeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'theme');
+    });
+  }
+
+  QueryBuilder<AppSettings, bool, QQueryOperations> vpnWholeDeviceProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'vpnWholeDevice');
     });
   }
 }

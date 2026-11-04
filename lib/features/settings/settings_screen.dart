@@ -15,6 +15,7 @@ import '../../data/local/models/sync_state.dart';
 import '../player/buffer_profiles.dart';
 import 'widgets/app_update_section.dart';
 import 'widgets/settings_tiles.dart';
+import 'widgets/vpn_section.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -82,6 +83,8 @@ class SettingsScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+              const SettingsSectionTitle('VPN'),
+              const VpnSection(),
               const SettingsSectionTitle('Lista'),
               for (final kind in SyncKind.values)
                 _SyncStateTile(
