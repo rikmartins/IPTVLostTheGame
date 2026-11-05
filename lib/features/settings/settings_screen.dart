@@ -13,6 +13,7 @@ import '../../core/utils/time_format.dart';
 import '../../data/local/models/account_info.dart';
 import '../../data/local/models/app_settings.dart';
 import '../../data/local/models/sync_state.dart';
+import '../../data/sources/credentials.dart';
 import '../player/buffer_profiles.dart';
 import 'widgets/app_update_section.dart';
 import 'widgets/profiles_section.dart';
@@ -33,6 +34,7 @@ class SettingsScreen extends ConsumerWidget {
     }
     final isar = ref.watch(isarProvider);
     final account = isar.accounts.getSync(0);
+    final credentials = ref.watch(sessionProvider);
 
     return SectionScaffold(
       title: 'Definições',
@@ -111,7 +113,17 @@ class SettingsScreen extends ConsumerWidget {
               const SettingsSectionTitle('Aplicação'),
               const AppUpdateSection(),
               const SettingsSectionTitle('Conta'),
-              if (account != null) ...[
+              // O Jellyfin não tem validade nem limite de ligações.
+              if (credentials is JellyfinCredentials) ...[
+                SettingsInfoTile(
+                  label: 'Utilizador',
+                  value: credentials.username,
+                ),
+                SettingsInfoTile(
+                  label: 'Servidor Jellyfin',
+                  value: credentials.serverUrl,
+                ),
+              ] else if (account != null) ...[
                 SettingsInfoTile(label: 'Utilizador', value: account.username),
                 SettingsInfoTile(label: 'Estado', value: account.status),
                 SettingsInfoTile(

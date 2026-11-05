@@ -4,7 +4,7 @@ import 'package:isar_community/isar.dart';
 import '../core/database/app_database.dart';
 import '../data/local/models/sync_state.dart';
 import '../data/repositories/auth_repository.dart';
-import '../data/sync/xtream_sync_service.dart';
+import '../data/sync/catalog_sync_service.dart';
 import 'profiles_controller.dart';
 
 /// Aberto em `main()` antes do `runApp`, para que nenhum ecrã tenha de
@@ -40,8 +40,8 @@ final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepository(),
 );
 
-final syncServiceProvider = Provider<XtreamSyncService>((ref) {
-  final service = XtreamSyncService(
+final syncServiceProvider = Provider<CatalogSyncService>((ref) {
+  final service = CatalogSyncService(
     databaseDirectory: ref.watch(appDatabaseProvider).directory,
   );
   ref.onDispose(service.dispose);

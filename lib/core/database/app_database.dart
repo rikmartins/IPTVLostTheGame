@@ -17,7 +17,7 @@ import '../../data/local/models/vod_movie.dart';
 /// Ponto único de abertura do Isar.
 ///
 /// A UI lê exclusivamente daqui; a rede só escreve, e a partir de outro
-/// isolate (ver `XtreamSyncService`).
+/// isolate (ver `CatalogSyncService`).
 class AppDatabase {
   AppDatabase._(this.isar, this.directory);
 

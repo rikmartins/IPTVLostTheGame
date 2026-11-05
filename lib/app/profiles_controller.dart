@@ -5,7 +5,8 @@ import '../core/database/app_database.dart';
 import '../data/local/models/account_info.dart';
 import '../data/profiles/profile.dart';
 import '../data/profiles/profile_store.dart';
-import '../data/remote/xtream/xtream_credentials.dart';
+import '../data/repositories/auth_repository.dart';
+import '../data/sources/credentials.dart';
 import 'providers.dart';
 
 /// Lido do cofre em `main()` antes do `runApp` (a app abre logo no perfil
@@ -29,21 +30,39 @@ class ProfilesController extends Notifier<ProfilesState> {
 
   /// Valida no servidor e ativa o perfil. A mesma conta (servidor e
   /// utilizador) atualiza o perfil que já existe; outra conta cria um novo,
-  /// com o seu próprio catálogo. Lança `XtreamException`.
+  /// com o seu próprio catálogo. Lança `SourceException`.
   Future<Profile> signIn({
+    SourceKind kind = SourceKind.xtream,
     required String name,
     required String server,
     required String username,
     required String password,
     bool remember = true,
   }) async {
-    final credentials = XtreamCredentials.fromInput(
-      server: server,
-      username: username,
-      password: password,
-    );
     final auth = ref.read(authRepositoryProvider);
-    final account = await auth.authenticate(credentials);
+    final SourceCredentials credentials;
+    final AccountInfo account;
+    String? serverName;
+    switch (kind) {
+      case SourceKind.xtream:
+        final xtream = XtreamCredentials.fromInput(
+          server: server,
+          username: username,
+          password: password,
+        );
+        account = await auth.authenticate(xtream);
+        credentials = xtream;
+      case SourceKind.jellyfin:
+        final login = await auth.authenticateJellyfin(
+          server: server,
+          username: username,
+          password: password,
+          deviceId: _jellyfinDeviceId(server, username),
+        );
+        credentials = login.credentials;
+        account = login.account;
+        serverName = login.serverName;
+    }
 
     final trimmed = name.trim();
     final existing = state.profiles
@@ -65,7 +84,11 @@ class ProfilesController extends Notifier<ProfilesState> {
       profile = Profile(
         id: id,
         name: trimmed.isEmpty
-            ? defaultProfileName(credentials, state.profiles.length)
+            ? defaultProfileName(
+                credentials,
+                state.profiles.length,
+                serverName: serverName,
+              )
             : trimmed,
         databaseName: mainInUse
             ? AppDatabase.profileInstanceName(id)
@@ -79,7 +102,16 @@ class ProfilesController extends Notifier<ProfilesState> {
       profile.databaseName,
     );
     await isar.writeTxn(() => isar.accounts.put(account));
-    await auth.setRemembered(remember ? credentials : null);
+    await auth.setRemembered(
+      remember
+          ? RememberedLogin(
+              kind: kind,
+              server: credentials.serverUrl,
+              username: username.trim(),
+              password: password,
+            )
+          : null,
+    );
 
     await _store.saveProfile(profile);
     await _activate(
@@ -92,6 +124,21 @@ class ProfilesController extends Notifier<ProfilesState> {
       ),
     );
     return profile;
+  }
+
+  /// Entrar outra vez numa conta Jellyfin que já é um perfil reutiliza o
+  /// ID de dispositivo: o servidor substitui a sessão antiga em vez de
+  /// juntar mais um dispositivo à lista.
+  String _jellyfinDeviceId(String server, String username) {
+    final urls = JellyfinCredentials.serverCandidates(server);
+    final user = username.trim().toLowerCase();
+    for (final profile in state.profiles) {
+      if (profile.credentials case final JellyfinCredentials c
+          when urls.contains(c.serverUrl) && c.username.toLowerCase() == user) {
+        return c.deviceId;
+      }
+    }
+    return newDeviceId();
   }
 
   /// Imediato: o catálogo do outro perfil já está no dispositivo. O que

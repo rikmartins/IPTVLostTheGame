@@ -2,9 +2,10 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
-import '../remote/xtream/xtream_credentials.dart';
+import '../sources/credentials.dart';
 
-/// Uma conta Xtream guardada na app ("Perfil 1 - IPTV X").
+/// Uma conta guardada na app ("Perfil 1 - IPTV X"), Xtream Codes ou
+/// Jellyfin.
 ///
 /// Cada perfil tem a sua base de dados Isar, por isso mudar de perfil é
 /// imediato: o catálogo do outro já está no dispositivo.
@@ -22,7 +23,7 @@ class Profile {
       id: id,
       name: json['name'] as String,
       databaseName: json['db'] as String,
-      credentials: XtreamCredentials.fromJson(json),
+      credentials: SourceCredentials.fromJson(json),
     );
   }
 
@@ -31,14 +32,12 @@ class Profile {
 
   /// Nome da instância Isar com o catálogo deste perfil.
   final String databaseName;
-  final XtreamCredentials credentials;
+  final SourceCredentials credentials;
 
-  /// Mesma conta no mesmo servidor (a palavra-passe pode ter mudado).
-  bool isSameAccount(XtreamCredentials other) =>
-      credentials.serverUrl == other.serverUrl &&
-      credentials.username == other.username;
+  bool isSameAccount(SourceCredentials other) =>
+      credentials.isSameAccount(other);
 
-  Profile copyWith({String? name, XtreamCredentials? credentials}) {
+  Profile copyWith({String? name, SourceCredentials? credentials}) {
     return Profile(
       id: id,
       name: name ?? this.name,
@@ -101,18 +100,31 @@ class ProfilesState {
   int get hashCode => Object.hash(activeId, Object.hashAll(profiles));
 }
 
-/// Nome quando não se escreve nenhum: o servidor ("exemplo.com"), que é o
-/// que distingue um fornecedor de outro.
-String defaultProfileName(XtreamCredentials credentials, int index) {
+/// Nome quando não se escreve nenhum: o nome que o servidor Jellyfin dá a
+/// si próprio, ou o servidor ("exemplo.com"), que é o que distingue um
+/// fornecedor de outro.
+String defaultProfileName(
+  SourceCredentials credentials,
+  int index, {
+  String? serverName,
+}) {
+  if (serverName != null && serverName.trim().isNotEmpty) {
+    return serverName.trim();
+  }
   final host = Uri.tryParse(credentials.serverUrl)?.host ?? '';
   return host.isEmpty ? 'Perfil ${index + 1}' : host;
 }
 
 /// 8 caracteres hexadecimais: entra no nome do ficheiro da base de dados.
-String newProfileId() {
+String newProfileId() => _randomHex(8);
+
+/// ID com que a app se apresenta a um servidor Jellyfin (um por perfil).
+String newDeviceId() => _randomHex(32);
+
+String _randomHex(int length) {
   final random = Random.secure();
   return List.generate(
-    8,
+    length,
     (_) => random.nextInt(16).toRadixString(16),
   ).join();
 }

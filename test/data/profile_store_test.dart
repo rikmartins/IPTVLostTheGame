@@ -4,7 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:iptv_app/data/profiles/profile.dart';
 import 'package:iptv_app/data/profiles/profile_store.dart';
-import 'package:iptv_app/data/remote/xtream/xtream_credentials.dart';
+import 'package:iptv_app/data/sources/credentials.dart';
 
 const _x = XtreamCredentials(
   serverUrl: 'http://iptv-x.pt:8080',

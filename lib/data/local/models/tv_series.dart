@@ -32,5 +32,8 @@ class TvSeries {
   /// Unix seconds (`last_modified`).
   int lastModified = 0;
 
+  /// Jellyfin: ID do item (o [id] é um hash dele). Null no Xtream.
+  String? remoteId;
+
   int syncStamp = 0;
 }

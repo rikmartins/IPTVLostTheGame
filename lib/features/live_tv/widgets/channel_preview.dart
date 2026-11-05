@@ -249,13 +249,13 @@ class _PlaybackStatus extends StatelessWidget {
           initialData: session.buffering,
           builder: (context, buffering) {
             if (playing == channelId && error != null) {
-              return const Center(
+              return Center(
                 child: Padding(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Text(
-                    'Não foi possível reproduzir este canal.',
+                    'Não foi possível reproduzir este canal.\n$error',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white70),
+                    style: const TextStyle(color: Colors.white70),
                   ),
                 ),
               );

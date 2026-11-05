@@ -4,7 +4,7 @@ import '../../local/models/live_channel.dart';
 import '../../local/models/media_category.dart';
 import '../../local/models/tv_series.dart';
 import '../../local/models/vod_movie.dart';
-import 'series_episode.dart';
+import '../../sources/series_episode.dart';
 
 // JSON do Xtream -> entidades Isar. Itens sem ID válido devolvem null e são
 // descartados pela sincronização, em vez de rebentarem com ela.

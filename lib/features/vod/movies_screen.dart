@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../app/session_controller.dart';
 import '../../app/sync_controller.dart';
 import '../../app/widgets/section_scaffold.dart';
 import '../../data/local/models/media_category.dart';
 import '../catalog/category_providers.dart';
 import '../catalog/widgets/category_list.dart';
 import '../catalog/widgets/poster_grid.dart';
-import '../player/player_screen.dart';
+import '../player/play_vod.dart';
 import 'vod_providers.dart';
 
 class MoviesScreen extends StatelessWidget {
@@ -67,18 +66,12 @@ class _MovieTile extends ConsumerWidget {
       title: movie.name,
       imageUrl: movie.poster,
       rating: movie.rating,
-      onTap: () {
-        final urls = ref.read(streamUrlsProvider);
-        if (urls == null) return;
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => PlayerScreen.vod(
-              title: movie.name,
-              url: urls.movie(movie.id, movie.containerExtension),
-            ),
-          ),
-        );
-      },
+      onTap: () => playVod(
+        context,
+        ref,
+        title: movie.name,
+        request: (client) => client.movie(movie.id),
+      ),
     );
   }
 }

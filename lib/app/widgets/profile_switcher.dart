@@ -2,14 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/profiles/profile.dart';
+import '../../data/sources/credentials.dart';
 import '../../features/auth/login_screen.dart';
 import '../profiles_controller.dart';
 
-/// "servidor · utilizador", para distinguir perfis com nomes parecidos.
+/// "servidor · utilizador" (e "Jellyfin"), para distinguir perfis com
+/// nomes parecidos.
 String profileSummary(Profile profile) {
-  final host = Uri.tryParse(profile.credentials.serverUrl)?.host ?? '';
-  final server = host.isEmpty ? profile.credentials.serverUrl : host;
-  return '$server · ${profile.credentials.username}';
+  final credentials = profile.credentials;
+  final host = Uri.tryParse(credentials.serverUrl)?.host ?? '';
+  final server = host.isEmpty ? credentials.serverUrl : host;
+  return [
+    if (credentials is JellyfinCredentials) credentials.kind.label,
+    server,
+    credentials.username,
+  ].join(' · ');
 }
 
 Future<void> switchProfile(

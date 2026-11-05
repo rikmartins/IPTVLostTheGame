@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/session_controller.dart';
+import '../../core/utils/time_format.dart';
 import '../../data/local/models/tv_series.dart';
-import '../../data/remote/xtream/series_episode.dart';
-import '../../data/remote/xtream/xtream_exception.dart';
+import '../../data/sources/series_episode.dart';
+import '../../data/sources/source_exception.dart';
 import '../catalog/widgets/artwork.dart';
-import '../player/player_screen.dart';
+import '../player/play_vod.dart';
 import 'series_providers.dart';
 
 class SeriesDetailScreen extends ConsumerStatefulWidget {
@@ -36,10 +37,12 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
           if (series != null) _Header(series: series),
           const SizedBox(height: 24),
           ...switch (episodes) {
-            AsyncData(:final value) => _episodeSection(value),
+            // Também a recarregar depois de ver um episódio: a lista fica
+            // no ecrã até chegar a nova.
+            AsyncValue(:final value?) => _episodeSection(value),
             AsyncError(:final error) => [
               _LoadError(
-                message: error is XtreamException
+                message: error is SourceException
                     ? error.message
                     : 'Não foi possível carregar os episódios',
                 onRetry: () =>
@@ -93,22 +96,18 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
     ];
   }
 
-  void _play(SeriesEpisode episode) {
-    final urls = ref.read(streamUrlsProvider);
-    if (urls == null) return;
+  Future<void> _play(SeriesEpisode episode) async {
     final seriesName = ref.read(seriesItemProvider(widget.seriesId))?.name;
-
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => PlayerScreen.vod(
-          title: [
-            ?seriesName,
-            'T${episode.season}E${episode.number}',
-          ].join(' · '),
-          url: urls.episode(episode.id, episode.containerExtension),
-        ),
-      ),
+    await playVod(
+      context,
+      ref,
+      title: [?seriesName, 'T${episode.season}E${episode.number}'].join(' · '),
+      request: (client) => client.episode(episode),
     );
+    // O servidor guardou onde ficou (ou marcou como visto).
+    if (mounted && ref.read(sourceClientProvider)?.tracksProgress == true) {
+      ref.invalidate(seriesEpisodesProvider(widget.seriesId));
+    }
   }
 }
 
@@ -173,7 +172,13 @@ class _EpisodeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final scheme = Theme.of(context).colorScheme;
+    final muted = scheme.onSurfaceVariant;
+    final resumeAt = episode.watched ? null : episode.resumeAt;
+    final details = [
+      ?episode.duration,
+      if (resumeAt != null) 'ficaste em ${formatPosition(resumeAt)}',
+    ];
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
@@ -189,8 +194,13 @@ class _EpisodeTile extends StatelessWidget {
         ),
       ),
       title: Text(episode.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: episode.duration == null ? null : Text(episode.duration!),
-      trailing: const Icon(Icons.play_arrow_rounded),
+      subtitle: details.isEmpty ? null : Text(details.join('  ·  ')),
+      trailing: episode.watched
+          ? Tooltip(
+              message: 'Visto',
+              child: Icon(Icons.check_circle, color: scheme.primary),
+            )
+          : const Icon(Icons.play_arrow_rounded),
       onTap: onTap,
     );
   }

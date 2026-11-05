@@ -7,9 +7,9 @@ import 'package:dio/dio.dart';
 import '../../../core/utils/json_object_splitter.dart';
 import '../../../core/utils/json_values.dart';
 import '../../local/models/account_info.dart';
-import 'series_episode.dart';
-import 'xtream_credentials.dart';
-import 'xtream_exception.dart';
+import '../../sources/series_episode.dart';
+import '../../sources/credentials.dart';
+import '../../sources/source_exception.dart';
 import 'xtream_mappers.dart';
 
 /// Ações de lista do `player_api.php`.
@@ -21,6 +21,8 @@ abstract final class XtreamAction {
   static const seriesCategories = 'get_series_categories';
   static const series = 'get_series';
 }
+
+const _notFound = 'Endereço não encontrado (o servidor é Xtream Codes?)';
 
 // Decoders fundidos: a VM faz parse direto dos bytes UTF-8, sem String
 // intermédia por objeto.
@@ -65,26 +67,26 @@ class XtreamApi {
     final body = await _getJson(_playerApi(), cancelToken);
     // Painéis antigos respondem 200 com corpo vazio a credenciais erradas.
     if (body == null) {
-      throw const XtreamException(XtreamErrorKind.invalidCredentials);
+      throw const SourceException(SourceErrorKind.invalidCredentials);
     }
     if (body is! Map<String, dynamic>) {
-      throw const XtreamException(XtreamErrorKind.invalidResponse);
+      throw const SourceException(SourceErrorKind.invalidResponse);
     }
 
     final user = body['user_info'];
     if (user is! Map<String, dynamic>) {
-      throw const XtreamException(XtreamErrorKind.invalidCredentials);
+      throw const SourceException(SourceErrorKind.invalidCredentials);
     }
     if (asInt(user['auth']) != 1) {
-      throw XtreamException(
-        XtreamErrorKind.invalidCredentials,
+      throw SourceException(
+        SourceErrorKind.invalidCredentials,
         asString(user['message']),
       );
     }
 
     final status = asString(user['status']);
     if (status != null && status.toLowerCase() != 'active') {
-      throw XtreamException(XtreamErrorKind.accountInactive, status);
+      throw SourceException(SourceErrorKind.accountInactive, status);
     }
 
     final server = body['server_info'];
@@ -162,13 +164,13 @@ class XtreamApi {
       if (bytes == null || bytes.isEmpty) return null;
       return _jsonUtf8.convert(bytes);
     } on DioException catch (e) {
-      throw XtreamException.fromDio(e);
+      throw SourceException.fromDio(e, notFound: _notFound);
     } on FormatException {
-      throw const XtreamException(XtreamErrorKind.invalidResponse);
+      throw const SourceException(SourceErrorKind.invalidResponse);
     }
   }
 
-  /// GET em streaming com os erros já convertidos em [XtreamException].
+  /// GET em streaming com os erros já convertidos em [SourceException].
   ///
   /// `await for` em vez de `yield*` de propósito: com `yield*` os erros do
   /// stream de origem passavam ao lado deste try/catch.
@@ -183,9 +185,9 @@ class XtreamApi {
         yield chunk;
       }
     } on DioException catch (e) {
-      throw XtreamException.fromDio(e);
+      throw SourceException.fromDio(e, notFound: _notFound);
     } on IOException catch (e) {
-      throw XtreamException(XtreamErrorKind.network, scrubSecrets('$e'));
+      throw SourceException(SourceErrorKind.network, scrubSecrets('$e'));
     }
   }
 }

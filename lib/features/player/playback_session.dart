@@ -6,11 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import '../../app/providers.dart';
 import '../../app/session_controller.dart';
 import '../../app/settings_controller.dart';
-import '../../data/local/models/account_info.dart';
 import '../../data/remote/xtream/xtream_api.dart';
+import '../../data/sources/source_client.dart';
+import '../../data/sources/source_exception.dart';
 import 'buffer_profiles.dart';
 
 /// Um player (libmpv + textura de vídeo) e o estado que a UI lê dele.
@@ -29,7 +29,18 @@ abstract class PlaybackSession {
   bool get buffering;
   Stream<bool> get bufferingStream;
 
-  Future<void> open(String url, {int? liveChannelId});
+  /// [start]: posição onde começar (retomar um filme). [reporter] é
+  /// avisado do progresso e de quando o stream deixa de tocar.
+  Future<void> open(
+    String url, {
+    int? liveChannelId,
+    Duration? start,
+    PlaybackReporter? reporter,
+  });
+
+  /// O stream não chegou a abrir (ex.: o servidor recusou o canal):
+  /// mostra [message] como se fosse um erro do player.
+  Future<void> fail(String message, {int? liveChannelId});
 
   /// Fecha o stream (e a ligação ao servidor), mas o player continua
   /// pronto para o próximo [open].
@@ -52,26 +63,57 @@ final playbackSessionFactoryProvider = Provider<PlaybackSessionFactory>((ref) {
   };
 });
 
-/// URL do stream de um canal, na extensão que a conta prefere.
-final liveStreamUrlProvider = Provider.autoDispose.family<String?, int>((
-  ref,
-  channelId,
-) {
-  final urls = ref.watch(streamUrlsProvider);
-  if (urls == null) return null;
-  final account = ref.watch(isarProvider).accounts.getSync(0);
-  return urls.live(
-    channelId,
-    extension: account?.preferredLiveExtension ?? 'ts',
+/// Abre um canal na [session]. No Jellyfin o servidor abre primeiro o canal
+/// (ocupa um sintonizador) e pode recusá-lo: o erro aparece no player.
+///
+/// [stillWanted] diz se o canal ainda é o escolhido quando o servidor
+/// responder; se não for, o que o servidor abriu é libertado logo.
+Future<void> openLiveChannel(
+  WidgetRef ref,
+  PlaybackSession session,
+  int channelId, {
+  required bool Function() stillWanted,
+}) async {
+  final client = ref.read(sourceClientProvider);
+  if (client == null) return;
+
+  final PlaybackRequest? request;
+  try {
+    request = await client.live(channelId);
+  } on SourceException catch (e) {
+    if (stillWanted()) await session.fail(e.message, liveChannelId: channelId);
+    return;
+  } catch (_) {
+    if (stillWanted()) {
+      await session.fail(
+        'Não foi possível abrir o canal',
+        liveChannelId: channelId,
+      );
+    }
+    return;
+  }
+  if (request == null) return;
+  if (!stillWanted()) {
+    request.discard();
+    return;
+  }
+  await session.open(
+    request.url,
+    liveChannelId: channelId,
+    reporter: request.reporter,
   );
-});
+}
 
 class MpvPlaybackSession implements PlaybackSession {
   MpvPlaybackSession(Map<String, String> mpvProperties) {
     // Antes do primeiro open, para a saída de vídeo já estar ligada.
     _controller = VideoController(_player);
     _configured = _applyProperties(mpvProperties);
-    _errors = _player.stream.error.listen((message) => _error.value = message);
+    // O mpv mete o URL nas mensagens: sem a query string (o token do
+    // Jellyfin).
+    _errors = _player.stream.error.listen(
+      (message) => _error.value = scrubSecrets(message),
+    );
   }
 
   final _player = Player();
@@ -115,25 +157,75 @@ class MpvPlaybackSession implements PlaybackSession {
   }
 
   @override
-  Future<void> open(String url, {int? liveChannelId}) async {
+  Future<void> open(
+    String url, {
+    int? liveChannelId,
+    Duration? start,
+    PlaybackReporter? reporter,
+  }) async {
     await _configured;
+    // Antes de abrir o novo: a posição lida ainda é a do stream anterior.
+    _endReport();
     _error.value = null;
     _liveChannel.value = liveChannelId;
+    _startReport(reporter, start ?? Duration.zero);
     await _player.open(
       Media(
         url,
         // Os painéis que filtram o User-Agent na API costumam filtrá-lo
         // também nos streams.
         httpHeaders: const {'User-Agent': XtreamApi.defaultUserAgent},
+        start: start,
       ),
     );
   }
 
   @override
+  Future<void> fail(String message, {int? liveChannelId}) async {
+    _endReport();
+    _liveChannel.value = liveChannelId;
+    _error.value = message;
+    await _player.stop();
+  }
+
+  @override
   Future<void> stop() async {
+    _endReport();
     _liveChannel.value = null;
     _error.value = null;
     await _player.stop();
+  }
+
+  // --- Progresso para o servidor (Jellyfin) --------------------------------
+
+  /// O servidor só precisa de saber o progresso de tempos a tempos; o
+  /// "visto" e o "continuar" decidem-se no fim, com a posição final.
+  static const _reportInterval = Duration(seconds: 10);
+
+  PlaybackReporter? _reporter;
+  Timer? _reportTimer;
+
+  void _startReport(PlaybackReporter? reporter, Duration start) {
+    if (reporter == null) return;
+    _reporter = reporter;
+    reporter.started(start);
+    _reportTimer = Timer.periodic(_reportInterval, (_) {
+      reporter.progress(_player.state.position, paused: !_player.state.playing);
+    });
+  }
+
+  void _endReport() {
+    _reportTimer?.cancel();
+    _reportTimer = null;
+    final reporter = _reporter;
+    _reporter = null;
+    // Visto até ao fim: o servidor marca-o como visto.
+    final state = _player.state;
+    reporter?.stopped(
+      state.completed && state.duration > Duration.zero
+          ? state.duration
+          : state.position,
+    );
   }
 
   @override
@@ -146,6 +238,7 @@ class MpvPlaybackSession implements PlaybackSession {
 
   @override
   void dispose() {
+    _endReport();
     _errors.cancel();
     _player.dispose();
     _liveChannel.dispose();

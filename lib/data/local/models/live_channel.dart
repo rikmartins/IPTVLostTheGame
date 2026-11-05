@@ -37,5 +37,8 @@ class LiveChannel {
 
   String? directSource;
 
+  /// Jellyfin: ID do canal (o [id] é um hash dele). Null no Xtream.
+  String? remoteId;
+
   int syncStamp = 0;
 }

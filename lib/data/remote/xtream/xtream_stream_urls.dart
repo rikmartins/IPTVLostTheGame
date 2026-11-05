@@ -1,4 +1,4 @@
-import 'xtream_credentials.dart';
+import '../../sources/credentials.dart';
 
 /// URLs de reprodução do Xtream, consumidos pelo media_kit.
 ///

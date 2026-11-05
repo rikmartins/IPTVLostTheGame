@@ -36,13 +36,18 @@ const VodMovieSchema = CollectionSchema(
     r'name': PropertySchema(id: 4, name: r'name', type: IsarType.string),
     r'poster': PropertySchema(id: 5, name: r'poster', type: IsarType.string),
     r'rating': PropertySchema(id: 6, name: r'rating', type: IsarType.double),
-    r'sortIndex': PropertySchema(
+    r'remoteId': PropertySchema(
       id: 7,
+      name: r'remoteId',
+      type: IsarType.string,
+    ),
+    r'sortIndex': PropertySchema(
+      id: 8,
       name: r'sortIndex',
       type: IsarType.long,
     ),
     r'syncStamp': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'syncStamp',
       type: IsarType.long,
     ),
@@ -115,6 +120,12 @@ int _vodMovieEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  {
+    final value = object.remoteId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -131,8 +142,9 @@ void _vodMovieSerialize(
   writer.writeString(offsets[4], object.name);
   writer.writeString(offsets[5], object.poster);
   writer.writeDouble(offsets[6], object.rating);
-  writer.writeLong(offsets[7], object.sortIndex);
-  writer.writeLong(offsets[8], object.syncStamp);
+  writer.writeString(offsets[7], object.remoteId);
+  writer.writeLong(offsets[8], object.sortIndex);
+  writer.writeLong(offsets[9], object.syncStamp);
 }
 
 VodMovie _vodMovieDeserialize(
@@ -150,8 +162,9 @@ VodMovie _vodMovieDeserialize(
   object.name = reader.readString(offsets[4]);
   object.poster = reader.readStringOrNull(offsets[5]);
   object.rating = reader.readDouble(offsets[6]);
-  object.sortIndex = reader.readLong(offsets[7]);
-  object.syncStamp = reader.readLong(offsets[8]);
+  object.remoteId = reader.readStringOrNull(offsets[7]);
+  object.sortIndex = reader.readLong(offsets[8]);
+  object.syncStamp = reader.readLong(offsets[9]);
   return object;
 }
 
@@ -177,8 +190,10 @@ P _vodMovieDeserializeProp<P>(
     case 6:
       return (reader.readDouble(offset)) as P;
     case 7:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 8:
+      return (reader.readLong(offset)) as P;
+    case 9:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1475,6 +1490,168 @@ extension VodMovieQueryFilter
     });
   }
 
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> remoteIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'remoteId'),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> remoteIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'remoteId'),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> remoteIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'remoteId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> remoteIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'remoteId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> remoteIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'remoteId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> remoteIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'remoteId',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> remoteIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'remoteId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> remoteIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'remoteId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> remoteIdContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'remoteId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> remoteIdMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'remoteId',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> remoteIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'remoteId', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> remoteIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'remoteId', value: ''),
+      );
+    });
+  }
+
   QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> sortIndexEqualTo(
     int value,
   ) {
@@ -1686,6 +1863,18 @@ extension VodMovieQuerySortBy on QueryBuilder<VodMovie, VodMovie, QSortBy> {
     });
   }
 
+  QueryBuilder<VodMovie, VodMovie, QAfterSortBy> sortByRemoteId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterSortBy> sortByRemoteIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteId', Sort.desc);
+    });
+  }
+
   QueryBuilder<VodMovie, VodMovie, QAfterSortBy> sortBySortIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sortIndex', Sort.asc);
@@ -1810,6 +1999,18 @@ extension VodMovieQuerySortThenBy
     });
   }
 
+  QueryBuilder<VodMovie, VodMovie, QAfterSortBy> thenByRemoteId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterSortBy> thenByRemoteIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteId', Sort.desc);
+    });
+  }
+
   QueryBuilder<VodMovie, VodMovie, QAfterSortBy> thenBySortIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sortIndex', Sort.asc);
@@ -1890,6 +2091,14 @@ extension VodMovieQueryWhereDistinct
     });
   }
 
+  QueryBuilder<VodMovie, VodMovie, QDistinct> distinctByRemoteId({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'remoteId', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<VodMovie, VodMovie, QDistinct> distinctBySortIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'sortIndex');
@@ -1951,6 +2160,12 @@ extension VodMovieQueryProperty
   QueryBuilder<VodMovie, double, QQueryOperations> ratingProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'rating');
+    });
+  }
+
+  QueryBuilder<VodMovie, String?, QQueryOperations> remoteIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'remoteId');
     });
   }
 

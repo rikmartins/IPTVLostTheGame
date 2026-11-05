@@ -6,8 +6,7 @@ import '../../app/session_controller.dart';
 import '../../data/local/models/media_category.dart';
 import '../../data/local/models/sync_state.dart';
 import '../../data/local/models/tv_series.dart';
-import '../../data/remote/xtream/series_episode.dart';
-import '../../data/remote/xtream/xtream_api.dart';
+import '../../data/sources/series_episode.dart';
 import '../catalog/category_providers.dart';
 
 /// Sem grupo (`null`): todas menos as dos grupos ocultos, das atualizadas
@@ -53,15 +52,9 @@ final seriesItemProvider = Provider.autoDispose.family<TvSeries?, int>((
 /// para voltar à mesma série ser instantâneo.
 final seriesEpisodesProvider = FutureProvider.autoDispose
     .family<List<SeriesEpisode>, int>((ref, seriesId) async {
-      final credentials = ref.watch(sessionProvider);
-      if (credentials == null) return const [];
-
-      final api = XtreamApi(credentials);
-      try {
-        final episodes = await api.seriesEpisodes(seriesId);
-        ref.keepAlive();
-        return episodes;
-      } finally {
-        api.close();
-      }
+      final client = ref.watch(sourceClientProvider);
+      if (client == null) return const [];
+      final episodes = await client.episodes(seriesId);
+      ref.keepAlive();
+      return episodes;
     });

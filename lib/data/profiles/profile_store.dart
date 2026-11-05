@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../core/storage/secure_storage.dart';
-import '../remote/xtream/xtream_credentials.dart';
+import '../sources/credentials.dart';
 import 'profile.dart';
 
 /// Perfis no cofre do sistema (têm a palavra-passe), nunca no Isar.

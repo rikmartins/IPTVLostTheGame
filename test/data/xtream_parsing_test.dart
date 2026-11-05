@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:iptv_app/core/utils/json_object_splitter.dart';
 import 'package:iptv_app/data/local/models/media_category.dart';
 import 'package:iptv_app/data/remote/xtream/xmltv_parser.dart';
-import 'package:iptv_app/data/remote/xtream/xtream_credentials.dart';
+import 'package:iptv_app/data/sources/credentials.dart';
 import 'package:iptv_app/data/remote/xtream/xtream_mappers.dart';
 
 /// Simula a rede a entregar o corpo aos bocados de [size] bytes.

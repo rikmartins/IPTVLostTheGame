@@ -33,5 +33,8 @@ class VodMovie {
 
   String? directSource;
 
+  /// Jellyfin: ID do item (o [id] é um hash dele). Null no Xtream.
+  String? remoteId;
+
   int syncStamp = 0;
 }

@@ -4,10 +4,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:iptv_app/app/profiles_controller.dart';
+import 'package:iptv_app/app/session_controller.dart';
 import 'package:iptv_app/app/sync_controller.dart';
 import 'package:iptv_app/data/local/models/epg_programme.dart';
 import 'package:iptv_app/data/local/models/live_channel.dart';
 import 'package:iptv_app/data/profiles/profile.dart';
+import 'package:iptv_app/data/sources/series_episode.dart';
+import 'package:iptv_app/data/sources/source_client.dart';
+import 'package:iptv_app/data/sources/source_exception.dart';
 import 'package:iptv_app/features/catalog/category_providers.dart';
 import 'package:iptv_app/features/epg/epg_providers.dart';
 import 'package:iptv_app/features/live_tv/live_tv_providers.dart';
@@ -19,6 +23,7 @@ import 'package:iptv_app/features/player/player_screen.dart';
 
 class _FakeSession implements PlaybackSession {
   final opened = <String>[];
+  final failures = <String>[];
   var stops = 0;
   var disposed = false;
   final _live = ValueNotifier<int?>(null);
@@ -37,9 +42,22 @@ class _FakeSession implements PlaybackSession {
   Stream<bool> get bufferingStream => const Stream.empty();
 
   @override
-  Future<void> open(String url, {int? liveChannelId}) async {
+  Future<void> open(
+    String url, {
+    int? liveChannelId,
+    Duration? start,
+    PlaybackReporter? reporter,
+  }) async {
     opened.add(url);
+    _error.value = null;
     _live.value = liveChannelId;
+  }
+
+  @override
+  Future<void> fail(String message, {int? liveChannelId}) async {
+    failures.add(message);
+    _live.value = liveChannelId;
+    _error.value = message;
   }
 
   @override
@@ -54,6 +72,40 @@ class _FakeSession implements PlaybackSession {
 
   @override
   void dispose() => disposed = true;
+}
+
+/// Canais como no Xtream; os [refused] são recusados pelo servidor (ex.:
+/// Jellyfin sem sintonizadores livres).
+class _FakeSource implements SourceClient {
+  _FakeSource(this.refused);
+
+  final Set<int> refused;
+
+  @override
+  Future<PlaybackRequest?> live(int channelId) async {
+    if (refused.contains(channelId)) {
+      throw const SourceException(
+        SourceErrorKind.server,
+        'sem sintonizadores livres',
+      );
+    }
+    return PlaybackRequest('http://iptv.test/live/u/p/$channelId.ts');
+  }
+
+  @override
+  Future<PlaybackRequest?> movie(int movieId) async => null;
+
+  @override
+  Future<List<SeriesEpisode>> episodes(int seriesId) async => const [];
+
+  @override
+  Future<PlaybackRequest?> episode(SeriesEpisode episode) async => null;
+
+  @override
+  bool get tracksProgress => false;
+
+  @override
+  void close() {}
 }
 
 class _IdleSync extends SyncController {
@@ -73,7 +125,11 @@ EpgProgramme _programme(String title, int startHour, int startMinute) {
     ..description = 'Descrição de $title';
 }
 
-Future<_FakeSession> _pump(WidgetTester tester, Size size) async {
+Future<_FakeSession> _pump(
+  WidgetTester tester,
+  Size size, {
+  Set<int> refused = const {},
+}) async {
   tester.view
     ..physicalSize = size
     ..devicePixelRatio = 1;
@@ -101,9 +157,7 @@ Future<_FakeSession> _pump(WidgetTester tester, Size size) async {
         clockProvider.overrideWith((ref) => Stream.value(_now)),
         nowNextProvider.overrideWith((ref, epg) => NowNext(current, next)),
         channelScheduleProvider.overrideWith((ref, epg) => [current, next]),
-        liveStreamUrlProvider.overrideWith(
-          (ref, id) => 'http://iptv.test/live/u/p/$id.ts',
-        ),
+        sourceClientProvider.overrideWithValue(_FakeSource(refused)),
         playbackSessionFactoryProvider.overrideWithValue(
           ({required bool live}) => session,
         ),
@@ -192,5 +246,24 @@ void main() {
     await tester.pump(LiveTvScreen.previewDebounce);
 
     expect(session.opened, ['http://iptv.test/live/u/p/3.ts']);
+  });
+
+  testWidgets('canal recusado pelo servidor mostra o motivo', (tester) async {
+    final session = await _pump(tester, const Size(1600, 900), refused: {2});
+
+    await tester.tap(find.text('Canal 2'));
+    await tester.pump(LiveTvScreen.previewDebounce);
+    await tester.pump();
+
+    expect(session.opened, isEmpty);
+    expect(session.failures, hasLength(1));
+    expect(find.textContaining('sem sintonizadores livres'), findsOneWidget);
+
+    // Outro canal abre normalmente.
+    await tester.tap(find.text('Canal 1'));
+    await tester.pump(LiveTvScreen.previewDebounce);
+    await tester.pump();
+    expect(session.opened, ['http://iptv.test/live/u/p/1.ts']);
+    expect(find.textContaining('sem sintonizadores livres'), findsNothing);
   });
 }

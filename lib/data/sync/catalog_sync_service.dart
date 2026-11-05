@@ -2,18 +2,19 @@ import 'dart:async';
 import 'dart:isolate';
 
 import '../local/models/sync_state.dart';
-import '../remote/xtream/xtream_credentials.dart';
+import '../sources/credentials.dart';
 import 'sync_progress.dart';
 import 'sync_worker.dart';
 
-/// Sincroniza o catálogo Xtream para o Isar num isolate dedicado.
+/// Sincroniza o catálogo do perfil (Xtream ou Jellyfin) para o Isar num
+/// isolate dedicado.
 ///
 /// Download, parse de JSON/XML e escrita correm todos fora do isolate da
 /// UI, por isso a grelha continua fluida mesmo durante uma sincronização de
 /// 100k+ itens. A UI não espera por isto: observa o Isar (`watch`) e é
 /// notificada no fim de cada etapa.
-class XtreamSyncService {
-  XtreamSyncService({required this.databaseDirectory});
+class CatalogSyncService {
+  CatalogSyncService({required this.databaseDirectory});
 
   final String databaseDirectory;
 
@@ -30,7 +31,7 @@ class XtreamSyncService {
   /// Arranca uma sincronização, ou devolve a que já está em curso.
   /// Completa quando o isolate termina.
   Future<void> start(
-    XtreamCredentials credentials, {
+    SourceCredentials credentials, {
     required String databaseName,
     Set<SyncKind> kinds = const {...SyncKind.values},
     Duration epgPast = const Duration(days: 1),
@@ -72,7 +73,7 @@ class XtreamSyncService {
   }
 
   Future<void> _run(SyncRequest Function(SendPort events) buildRequest) async {
-    final port = ReceivePort('xtream-sync');
+    final port = ReceivePort('catalog-sync');
     final done = Completer<void>();
 
     port.listen((Object? message) {
@@ -103,7 +104,7 @@ class XtreamSyncService {
         buildRequest(port.sendPort),
         onError: port.sendPort,
         onExit: port.sendPort,
-        debugName: 'xtream-sync',
+        debugName: 'catalog-sync',
       );
     } catch (_) {
       port.close();

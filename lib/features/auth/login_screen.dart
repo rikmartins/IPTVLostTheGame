@@ -8,7 +8,8 @@ import '../../app/providers.dart';
 import '../../app/widgets/brand.dart';
 import '../../core/config/app_config.dart';
 import '../../data/phone_entry/phone_form_server.dart';
-import '../../data/remote/xtream/xtream_exception.dart';
+import '../../data/sources/credentials.dart';
+import '../../data/sources/source_exception.dart';
 import '../phone_entry/phone_entry_panel.dart';
 
 /// Escrever com o comando da TV é lento: lá o QR aparece logo. Nos
@@ -16,28 +17,63 @@ import '../phone_entry/phone_entry_panel.dart';
 final bool _phoneEntryAvailable =
     isAndroidTvBuild || Platform.isWindows || Platform.isMacOS || Platform.isLinux;
 
-const _phoneForm = PhoneForm(
-  title: 'Iniciar sessão',
-  intro: 'Dados Xtream Codes do teu fornecedor de IPTV.',
-  fields: [
-    PhoneField(
-      'name',
-      'Nome do perfil (opcional)',
-      placeholder: 'Ex.: IPTV X',
-      optional: true,
-    ),
-    PhoneField(
-      'server',
-      'Servidor',
-      type: PhoneFieldType.url,
-      placeholder: 'http://exemplo.com:8080',
-    ),
-    PhoneField('username', 'Utilizador', autocomplete: 'username'),
-    PhoneField('password', 'Palavra-passe', type: PhoneFieldType.password),
-  ],
-  submitLabel: 'Entrar',
-  doneMessage: 'Sessão iniciada. A app já está a carregar a tua lista.',
-);
+/// Exemplo de endereço de cada tipo de servidor.
+String _serverHint(SourceKind kind) => switch (kind) {
+  SourceKind.xtream => 'http://exemplo.com:8080',
+  SourceKind.jellyfin => 'http://192.168.1.10:8096',
+};
+
+const _phoneForms = {
+  SourceKind.xtream: PhoneForm(
+    title: 'Iniciar sessão',
+    intro: 'Dados Xtream Codes do teu fornecedor de IPTV.',
+    fields: [
+      PhoneField(
+        'name',
+        'Nome do perfil (opcional)',
+        placeholder: 'Ex.: IPTV X',
+        optional: true,
+      ),
+      PhoneField(
+        'server',
+        'Servidor',
+        type: PhoneFieldType.url,
+        placeholder: 'http://exemplo.com:8080',
+      ),
+      PhoneField('username', 'Utilizador', autocomplete: 'username'),
+      PhoneField('password', 'Palavra-passe', type: PhoneFieldType.password),
+    ],
+    submitLabel: 'Entrar',
+    doneMessage: 'Sessão iniciada. A app já está a carregar a tua lista.',
+  ),
+  SourceKind.jellyfin: PhoneForm(
+    title: 'Entrar no Jellyfin',
+    intro: 'Endereço do teu servidor Jellyfin e a tua conta nele.',
+    fields: [
+      PhoneField(
+        'name',
+        'Nome do perfil (opcional)',
+        placeholder: 'Ex.: Jellyfin de casa',
+        optional: true,
+      ),
+      PhoneField(
+        'server',
+        'Servidor',
+        type: PhoneFieldType.url,
+        placeholder: 'http://192.168.1.10:8096',
+      ),
+      PhoneField('username', 'Utilizador', autocomplete: 'username'),
+      PhoneField(
+        'password',
+        'Palavra-passe',
+        type: PhoneFieldType.password,
+        optional: true,
+      ),
+    ],
+    submitLabel: 'Entrar',
+    doneMessage: 'Sessão iniciada. A app já está a carregar a biblioteca.',
+  ),
+};
 
 class LoginScreen extends ConsumerStatefulWidget {
   /// [addingProfile]: aberto a partir das definições para juntar outra
@@ -56,6 +92,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _username = TextEditingController();
   final _password = TextEditingController();
 
+  SourceKind _kind = SourceKind.xtream;
   bool _busy = false;
   bool _obscure = true;
   bool _remember = true;
@@ -84,7 +121,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // Não apagar o que já se tenha começado a escrever.
     if (_server.text.isNotEmpty || _username.text.isNotEmpty) return;
     setState(() {
-      _server.text = saved.serverUrl;
+      _kind = saved.kind;
+      _server.text = saved.server;
       _username.text = saved.username;
       _password.text = saved.password;
     });
@@ -93,9 +131,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   /// Devolve a mensagem de erro, ou `null` se entrou.
   Future<String?> _login() async {
     if (_busy) return 'Já está a iniciar sessão. Aguarda.';
+    // No Jellyfin há contas sem palavra-passe.
     if (_server.text.trim().isEmpty ||
         _username.text.trim().isEmpty ||
-        _password.text.isEmpty) {
+        (_password.text.isEmpty && _kind == SourceKind.xtream)) {
       return 'Preenche todos os campos';
     }
 
@@ -107,6 +146,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref
           .read(profilesProvider.notifier)
           .signIn(
+            kind: _kind,
             name: _name.text,
             server: _server.text,
             username: _username.text,
@@ -116,7 +156,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // Sucesso: a app troca para a grelha do perfil sozinha (ver IptvApp).
       if (widget.addingProfile && mounted) Navigator.of(context).pop();
       return null;
-    } on XtreamException catch (e) {
+    } on SourceException catch (e) {
       return e.message;
     } catch (_) {
       return 'Erro inesperado ao iniciar sessão';
@@ -161,14 +201,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             const SizedBox(height: 16),
           ],
           Text(
-            widget.addingProfile
-                ? 'Junta outra conta Xtream Codes. Cada perfil tem a sua '
-                      'lista e mudas de um para o outro nas definições.'
-                : 'Inicia sessão com os dados Xtream Codes do teu fornecedor.',
+            switch ((_kind, widget.addingProfile)) {
+              (SourceKind.xtream, true) =>
+                'Junta outra conta Xtream Codes. Cada perfil tem a sua '
+                    'lista e mudas de um para o outro nas definições.',
+              (SourceKind.xtream, false) =>
+                'Inicia sessão com os dados Xtream Codes do teu fornecedor.',
+              (SourceKind.jellyfin, _) =>
+                'Entra no teu servidor Jellyfin: os filmes, as séries e a '
+                    'TV em direto dele aparecem num perfil próprio.',
+            },
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(color: muted),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 20),
+          SegmentedButton<SourceKind>(
+            segments: [
+              for (final kind in SourceKind.values)
+                ButtonSegment(value: kind, label: Text(kind.label)),
+            ],
+            selected: {_kind},
+            showSelectedIcon: false,
+            onSelectionChanged: _busy
+                ? null
+                : (selection) => setState(() {
+                    _kind = selection.single;
+                    _error = null;
+                  }),
+          ),
+          const SizedBox(height: 20),
           TextField(
             controller: _name,
             // Na TV, focar um campo abre logo o teclado por cima do QR.
@@ -189,9 +250,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             textInputAction: TextInputAction.next,
             autocorrect: false,
             autofillHints: const [AutofillHints.url],
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Servidor',
-              hintText: 'http://exemplo.com:8080',
+              hintText: _serverHint(_kind),
             ),
           ),
           const SizedBox(height: 12),
@@ -214,7 +275,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             autofillHints: const [AutofillHints.password],
             onSubmitted: (_) => _submit(),
             decoration: InputDecoration(
-              labelText: 'Palavra-passe',
+              labelText: _kind == SourceKind.jellyfin
+                  ? 'Palavra-passe (se tiver)'
+                  : 'Palavra-passe',
               suffixIcon: IconButton(
                 tooltip: _obscure ? 'Mostrar' : 'Ocultar',
                 icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
@@ -274,7 +337,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
 
     final panel = _showPhone && _phoneEntryAvailable
-        ? PhoneEntryPanel(form: _phoneForm, onSubmit: _submitFromPhone)
+        ? PhoneEntryPanel(
+            // Outro tipo de servidor = outro formulário (e outro QR).
+            key: ValueKey(_kind),
+            form: _phoneForms[_kind]!,
+            onSubmit: _submitFromPhone,
+          )
         : null;
     final wide = MediaQuery.sizeOf(context).width >= 820;
 

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/sources/source_client.dart';
 import 'playback_session.dart';
 import 'widgets/live_osd.dart';
 
@@ -23,22 +24,27 @@ class PlayerScreen extends ConsumerStatefulWidget {
     required this.initialIndex,
     this.session,
   }) : vodTitle = null,
-       vodUrl = null;
+       vodRequest = null,
+       vodStart = null;
 
+  /// [start]: retomar a partir daqui (ver `playVod`).
   const PlayerScreen.vod({
     super.key,
     required String title,
-    required String url,
+    required PlaybackRequest request,
+    Duration? start,
   }) : channelIds = null,
        initialIndex = 0,
        vodTitle = title,
-       vodUrl = url,
+       vodRequest = request,
+       vodStart = start,
        session = null;
 
   final List<int>? channelIds;
   final int initialIndex;
   final String? vodTitle;
-  final String? vodUrl;
+  final PlaybackRequest? vodRequest;
+  final Duration? vodStart;
 
   /// Sessão de quem abriu o ecrã (a pré-visualização da TV em direto).
   final PlaybackSession? session;
@@ -109,17 +115,27 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   /// [initial]: chamado do `initState`, onde o estado já foi preparado.
   Future<void> _open({bool initial = false}) async {
     if (!widget.isLive) {
-      await _session.open(widget.vodUrl!);
+      final request = widget.vodRequest!;
+      await _session.open(
+        request.url,
+        start: widget.vodStart,
+        reporter: request.reporter,
+      );
       return;
     }
 
     final channelId = widget.channelIds![_index];
     // Continua sem reabrir (nem pedir outra ligação ao servidor).
     if (_isPlaying(channelId)) return;
-    final url = ref.read(liveStreamUrlProvider(channelId));
-    if (url == null || !mounted) return;
+    if (!mounted) return;
     if (!initial) setState(() => _buffering = true);
-    await _session.open(url, liveChannelId: channelId);
+    await openLiveChannel(
+      ref,
+      _session,
+      channelId,
+      // Pode ter havido zapping enquanto o servidor abria o canal.
+      stillWanted: () => mounted && widget.channelIds![_index] == channelId,
+    );
   }
 
   void _zap(int delta) {

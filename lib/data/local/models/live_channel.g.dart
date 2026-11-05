@@ -46,13 +46,18 @@ const LiveChannelSchema = CollectionSchema(
     r'icon': PropertySchema(id: 6, name: r'icon', type: IsarType.string),
     r'name': PropertySchema(id: 7, name: r'name', type: IsarType.string),
     r'number': PropertySchema(id: 8, name: r'number', type: IsarType.long),
-    r'sortIndex': PropertySchema(
+    r'remoteId': PropertySchema(
       id: 9,
+      name: r'remoteId',
+      type: IsarType.string,
+    ),
+    r'sortIndex': PropertySchema(
+      id: 10,
       name: r'sortIndex',
       type: IsarType.long,
     ),
     r'syncStamp': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'syncStamp',
       type: IsarType.long,
     ),
@@ -117,6 +122,12 @@ int _liveChannelEstimateSize(
     }
   }
   bytesCount += 3 + object.name.length * 3;
+  {
+    final value = object.remoteId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -135,8 +146,9 @@ void _liveChannelSerialize(
   writer.writeString(offsets[6], object.icon);
   writer.writeString(offsets[7], object.name);
   writer.writeLong(offsets[8], object.number);
-  writer.writeLong(offsets[9], object.sortIndex);
-  writer.writeLong(offsets[10], object.syncStamp);
+  writer.writeString(offsets[9], object.remoteId);
+  writer.writeLong(offsets[10], object.sortIndex);
+  writer.writeLong(offsets[11], object.syncStamp);
 }
 
 LiveChannel _liveChannelDeserialize(
@@ -156,8 +168,9 @@ LiveChannel _liveChannelDeserialize(
   object.id = id;
   object.name = reader.readString(offsets[7]);
   object.number = reader.readLong(offsets[8]);
-  object.sortIndex = reader.readLong(offsets[9]);
-  object.syncStamp = reader.readLong(offsets[10]);
+  object.remoteId = reader.readStringOrNull(offsets[9]);
+  object.sortIndex = reader.readLong(offsets[10]);
+  object.syncStamp = reader.readLong(offsets[11]);
   return object;
 }
 
@@ -187,8 +200,10 @@ P _liveChannelDeserializeProp<P>(
     case 8:
       return (reader.readLong(offset)) as P;
     case 9:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 10:
+      return (reader.readLong(offset)) as P;
+    case 11:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1440,6 +1455,168 @@ extension LiveChannelQueryFilter
   }
 
   QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  remoteIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'remoteId'),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  remoteIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'remoteId'),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition> remoteIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'remoteId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  remoteIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'remoteId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  remoteIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'remoteId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition> remoteIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'remoteId',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  remoteIdStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'remoteId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  remoteIdEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'remoteId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  remoteIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'remoteId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition> remoteIdMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'remoteId',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  remoteIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'remoteId', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  remoteIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'remoteId', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
   sortIndexEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -1668,6 +1845,18 @@ extension LiveChannelQuerySortBy
     });
   }
 
+  QueryBuilder<LiveChannel, LiveChannel, QAfterSortBy> sortByRemoteId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterSortBy> sortByRemoteIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteId', Sort.desc);
+    });
+  }
+
   QueryBuilder<LiveChannel, LiveChannel, QAfterSortBy> sortBySortIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sortIndex', Sort.asc);
@@ -1817,6 +2006,18 @@ extension LiveChannelQuerySortThenBy
     });
   }
 
+  QueryBuilder<LiveChannel, LiveChannel, QAfterSortBy> thenByRemoteId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterSortBy> thenByRemoteIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteId', Sort.desc);
+    });
+  }
+
   QueryBuilder<LiveChannel, LiveChannel, QAfterSortBy> thenBySortIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sortIndex', Sort.asc);
@@ -1906,6 +2107,14 @@ extension LiveChannelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<LiveChannel, LiveChannel, QDistinct> distinctByRemoteId({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'remoteId', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<LiveChannel, LiveChannel, QDistinct> distinctBySortIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'sortIndex');
@@ -1978,6 +2187,12 @@ extension LiveChannelQueryProperty
   QueryBuilder<LiveChannel, int, QQueryOperations> numberProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'number');
+    });
+  }
+
+  QueryBuilder<LiveChannel, String?, QQueryOperations> remoteIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'remoteId');
     });
   }
 

@@ -12,8 +12,9 @@ import 'package:iptv_app/data/local/models/account_info.dart';
 import 'package:iptv_app/data/local/models/app_settings.dart';
 import 'package:iptv_app/data/profiles/profile.dart';
 import 'package:iptv_app/data/profiles/profile_store.dart';
-import 'package:iptv_app/data/remote/xtream/xtream_credentials.dart';
+import 'package:iptv_app/data/remote/jellyfin/jellyfin_client.dart';
 import 'package:iptv_app/data/repositories/auth_repository.dart';
+import 'package:iptv_app/data/sources/credentials.dart';
 
 // Isar nativo a sério: usa o libisar.dll do build Windows
 // (`flutter build windows`). Sem ele (CI em Linux) estes testes saltam.
@@ -25,7 +26,10 @@ final _skip = !Platform.isWindows || !File(_isarLibrary).existsSync()
     : null;
 
 class _FakeAuth implements AuthRepository {
-  XtreamCredentials? rememberedValue;
+  RememberedLogin? rememberedValue;
+
+  /// Um token novo a cada login, como no servidor.
+  var _logins = 0;
 
   @override
   Future<AccountInfo> authenticate(XtreamCredentials credentials) async =>
@@ -35,11 +39,35 @@ class _FakeAuth implements AuthRepository {
         ..lastLoginAt = DateTime(2026);
 
   @override
-  Future<XtreamCredentials?> remembered() async => rememberedValue;
+  Future<JellyfinLogin> authenticateJellyfin({
+    required String server,
+    required String username,
+    required String password,
+    required String deviceId,
+  }) async {
+    _logins++;
+    return JellyfinLogin(
+      credentials: JellyfinCredentials(
+        serverUrl: JellyfinCredentials.serverCandidates(server).first,
+        username: username,
+        userId: 'u-$username',
+        accessToken: 'token-$_logins',
+        deviceId: deviceId,
+      ),
+      account: AccountInfo()
+        ..username = username
+        ..status = 'Active'
+        ..lastLoginAt = DateTime(2026),
+      serverName: 'Jellyfin da sala',
+    );
+  }
 
   @override
-  Future<void> setRemembered(XtreamCredentials? credentials) async =>
-      rememberedValue = credentials;
+  Future<RememberedLogin?> remembered() async => rememberedValue;
+
+  @override
+  Future<void> setRemembered(RememberedLogin? login) async =>
+      rememberedValue = login;
 }
 
 void main() {
@@ -135,8 +163,51 @@ void main() {
     expect(state().profiles, hasLength(2));
     expect(again.id, x.id);
     expect(again.name, 'IPTV X');
-    expect(again.credentials.password, 'nova');
+    expect((again.credentials as XtreamCredentials).password, 'nova');
     expect(state().activeId, x.id);
+  }, skip: _skip);
+
+  test('Jellyfin: perfil próprio com o nome do servidor; voltar a entrar '
+      'reutiliza o dispositivo', () async {
+    await signIn('IPTV X', 'iptv-x.pt:8080', 'ana');
+    final jelly = await controller().signIn(
+      kind: SourceKind.jellyfin,
+      name: '',
+      server: '192.168.1.10',
+      username: 'rui',
+      password: '',
+    );
+    expect(jelly.name, 'Jellyfin da sala');
+    expect(jelly.databaseName, 'iptv_${jelly.id}');
+    final credentials = jelly.credentials as JellyfinCredentials;
+    expect(credentials.serverUrl, 'http://192.168.1.10:8096');
+    expect(credentials.deviceId, hasLength(32));
+
+    final again = await controller().signIn(
+      kind: SourceKind.jellyfin,
+      name: '',
+      server: '192.168.1.10',
+      username: 'rui',
+      password: '',
+    );
+    expect(state().profiles, hasLength(2));
+    expect(again.id, jelly.id);
+    final renewed = again.credentials as JellyfinCredentials;
+    expect(renewed.deviceId, credentials.deviceId);
+    expect(renewed.accessToken, isNot(credentials.accessToken));
+
+    final reloaded = await ProfileStore(storage)
+        .load(legacyDatabaseName: 'iptv');
+    expect(reloaded, state());
+    expect(
+      await container.read(authRepositoryProvider).remembered(),
+      const RememberedLogin(
+        kind: SourceKind.jellyfin,
+        server: 'http://192.168.1.10:8096',
+        username: 'rui',
+        password: '',
+      ),
+    );
   }, skip: _skip);
 
   test('mudar o nome', () async {

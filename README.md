@@ -31,13 +31,20 @@ Depois de instalada, a app procura novas versões em
 
 ---
 
-Cliente IPTV (Xtream Codes) em Flutter para Android, Android TV e Windows.
+Cliente IPTV (Xtream Codes) e Jellyfin em Flutter para Android, Android TV
+e Windows.
 
 - Catálogo (canais, filmes, séries e guia TV) sincronizado para uma base de
   dados local (Isar) num isolate próprio; a interface lê só daí.
 - Vários perfis (por exemplo *IPTV X* e *IPTV Y*), cada um com a sua lista
   guardada no dispositivo: mudar de perfil é imediato. Em
   **Definições → Perfis**, ou no nome do perfil no topo de cada secção.
+- Perfis **Jellyfin** (escolhe *Jellyfin* no login): as bibliotecas de
+  filmes e séries aparecem como grupos, e a TV em direto do servidor (com
+  o guia) na secção TV. Os filmes e episódios tocam o ficheiro original,
+  sem conversão, e o progresso fica no servidor: retomas onde ficaste,
+  aqui ou noutro aparelho, e os episódios vistos aparecem marcados. Basta
+  escrever o IP do servidor; a porta 8096 é experimentada sozinha.
 - Grupos visíveis à escolha: o botão ao lado de **Grupos** (TV, filmes e
   séries) abre a lista de todos os grupos para mostrar ou ocultar. Os
   ocultos também saem de "Todos". Fica guardado em cada perfil.

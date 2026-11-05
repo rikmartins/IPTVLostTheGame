@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/session_controller.dart';
 import '../../app/sync_controller.dart';
 import '../../app/widgets/section_scaffold.dart';
 import '../../data/local/models/media_category.dart';
+import '../../data/sources/credentials.dart';
 import '../catalog/category_providers.dart';
 import '../catalog/widgets/category_list.dart';
 import '../player/playback_session.dart';
@@ -79,9 +81,13 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     if (!mounted || _selected != id) return;
     final session = _ensureSession();
     if (session.liveChannel.value == id && session.error.value == null) return;
-    final url = ref.read(liveStreamUrlProvider(id));
-    if (url == null) return;
-    await session.open(url, liveChannelId: id);
+    await openLiveChannel(
+      ref,
+      session,
+      id,
+      // Pode ter escolhido outro canal (ou saído) enquanto o servidor abria.
+      stillWanted: () => mounted && _selected == id && _session == session,
+    );
   }
 
   Future<void> _openFullScreen(List<int> ids, int index) async {
@@ -199,11 +205,16 @@ class _ChannelList extends ConsumerWidget {
 
     if (ids.isEmpty) {
       final syncing = ref.watch(syncControllerProvider).isRunning;
+      final jellyfin = ref.watch(sessionProvider) is JellyfinCredentials;
       return EmptyCatalog(
         icon: Icons.live_tv_outlined,
-        message: syncing
-            ? 'A descarregar a lista de canais…'
-            : 'Sem canais neste grupo',
+        message: switch ((syncing, jellyfin && categoryId == null)) {
+          (true, _) => 'A descarregar a lista de canais…',
+          (false, true) =>
+            'Este servidor Jellyfin não tem TV em direto (ou a tua conta '
+                'não tem acesso a ela)',
+          (false, false) => 'Sem canais neste grupo',
+        },
       );
     }
 

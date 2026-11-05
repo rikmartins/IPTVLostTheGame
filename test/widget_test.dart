@@ -9,25 +9,34 @@ import 'package:iptv_app/app/widgets/brand.dart';
 import 'package:iptv_app/data/local/models/account_info.dart';
 import 'package:iptv_app/data/local/models/app_settings.dart';
 import 'package:iptv_app/data/profiles/profile.dart';
-import 'package:iptv_app/data/remote/xtream/xtream_credentials.dart';
+import 'package:iptv_app/data/remote/jellyfin/jellyfin_client.dart';
 import 'package:iptv_app/data/repositories/auth_repository.dart';
+import 'package:iptv_app/data/sources/credentials.dart';
 
 // Sem cofre do sistema nem Isar: nenhum dos dois existe no `flutter test`.
 
 class _FakeAuth implements AuthRepository {
   _FakeAuth([this.saved]);
 
-  final XtreamCredentials? saved;
+  final RememberedLogin? saved;
 
   @override
-  Future<XtreamCredentials?> remembered() async => saved;
+  Future<RememberedLogin?> remembered() async => saved;
 
   @override
-  Future<void> setRemembered(XtreamCredentials? credentials) async {}
+  Future<void> setRemembered(RememberedLogin? login) async {}
 
   @override
   Future<AccountInfo> authenticate(XtreamCredentials credentials) =>
       throw UnimplementedError();
+
+  @override
+  Future<JellyfinLogin> authenticateJellyfin({
+    required String server,
+    required String username,
+    required String password,
+    required String deviceId,
+  }) => throw UnimplementedError();
 }
 
 class _MemorySettings extends SettingsController {
@@ -42,7 +51,7 @@ class _MemorySettings extends SettingsController {
 Future<void> _pumpApp(
   WidgetTester tester, {
   AppSettings? settings,
-  XtreamCredentials? remembered,
+  RememberedLogin? remembered,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -83,8 +92,9 @@ void main() {
   testWidgets('dados memorizados preenchem o login', (tester) async {
     await _pumpApp(
       tester,
-      remembered: const XtreamCredentials(
-        serverUrl: 'http://exemplo.pt:8080',
+      remembered: const RememberedLogin(
+        kind: SourceKind.xtream,
+        server: 'http://exemplo.pt:8080',
         username: 'ana',
         password: 'segredo',
       ),
@@ -97,6 +107,47 @@ void main() {
       find.widgetWithText(CheckboxListTile, 'Memorizar dados'),
     );
     expect(remember.value, isTrue);
+  });
+
+  testWidgets('dados memorizados de um Jellyfin escolhem o Jellyfin', (
+    tester,
+  ) async {
+    await _pumpApp(
+      tester,
+      remembered: const RememberedLogin(
+        kind: SourceKind.jellyfin,
+        server: 'http://nas.casa:8096',
+        username: 'rui',
+        password: '',
+      ),
+    );
+    await tester.pump();
+
+    final kinds = tester.widget<SegmentedButton<SourceKind>>(
+      find.byType(SegmentedButton<SourceKind>),
+    );
+    expect(kinds.selected, {SourceKind.jellyfin});
+    expect(find.text('http://nas.casa:8096'), findsOneWidget);
+    expect(find.text('Palavra-passe (se tiver)'), findsOneWidget);
+  });
+
+  testWidgets('no Jellyfin a palavra-passe pode ficar vazia', (tester) async {
+    await _pumpApp(tester);
+
+    await tester.tap(find.text('Jellyfin'));
+    await tester.pump();
+    expect(find.textContaining('servidor Jellyfin'), findsOneWidget);
+
+    await tester.enterText(find.widgetWithText(TextField, 'Servidor'), 'nas');
+    await tester.enterText(find.widgetWithText(TextField, 'Utilizador'), 'rui');
+    final enter = find.widgetWithText(FilledButton, 'Entrar');
+    await tester.ensureVisible(enter);
+    await tester.tap(enter);
+    await tester.pump();
+
+    // Passou da validação e chegou ao servidor (aqui, um falso que falha).
+    expect(find.text('Preenche todos os campos'), findsNothing);
+    expect(find.text('Erro inesperado ao iniciar sessão'), findsOneWidget);
   });
 
   testWidgets('tema claro por omissão', (tester) async {

@@ -1,17 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data/remote/xtream/xtream_credentials.dart';
-import '../data/remote/xtream/xtream_stream_urls.dart';
+import '../data/remote/jellyfin/jellyfin_source_client.dart';
+import '../data/remote/xtream/xtream_source_client.dart';
+import '../data/sources/credentials.dart';
+import '../data/sources/source_client.dart';
 import 'profiles_controller.dart';
+import 'providers.dart';
 import 'sync_controller.dart';
 
 /// Credenciais do perfil ativo; `null` = sem perfil (ecrã de login).
 ///
 /// Offline-first: a app abre logo com o catálogo que está no Isar e o que
 /// estiver desatualizado sincroniza por trás, também ao mudar de perfil.
-class SessionController extends Notifier<XtreamCredentials?> {
+class SessionController extends Notifier<SourceCredentials?> {
   @override
-  XtreamCredentials? build() {
+  SourceCredentials? build() {
     // Só o perfil e as credenciais: mudar o nome não volta a sincronizar.
     ref.watch(
       profilesProvider.select((s) => (s.activeId, s.active?.credentials)),
@@ -39,11 +42,20 @@ class SessionController extends Notifier<XtreamCredentials?> {
   }
 }
 
-final sessionProvider = NotifierProvider<SessionController, XtreamCredentials?>(
+final sessionProvider = NotifierProvider<SessionController, SourceCredentials?>(
   SessionController.new,
 );
 
-final streamUrlsProvider = Provider<XtreamStreamUrls?>((ref) {
+/// Streams e episódios do perfil ativo. Muda (e fecha o anterior) ao
+/// trocar de perfil.
+final sourceClientProvider = Provider<SourceClient?>((ref) {
   final credentials = ref.watch(sessionProvider);
-  return credentials == null ? null : XtreamStreamUrls(credentials);
+  if (credentials == null) return null;
+  final isar = ref.watch(isarProvider);
+  final SourceClient client = switch (credentials) {
+    final XtreamCredentials c => XtreamSourceClient(c, isar),
+    final JellyfinCredentials c => JellyfinSourceClient(c, isar),
+  };
+  ref.onDispose(client.close);
+  return client;
 });
