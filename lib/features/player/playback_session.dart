@@ -104,24 +104,64 @@ Future<void> openLiveChannel(
   );
 }
 
+/// Mensagens de erro do mpv que não querem dizer que o stream falhou.
+///
+/// "Cannot seek in this stream" / "--force-seekable": alguém pediu um seek
+/// num direto, que não se pode recuar (no Android acontece quando a
+/// superfície do vídeo muda, ex.: da pré-visualização para o ecrã
+/// inteiro). O vídeo continua a tocar.
+bool isHarmlessPlayerError(String message) {
+  final text = message.toLowerCase();
+  return text.contains('cannot seek') || text.contains('force-seekable');
+}
+
 class MpvPlaybackSession implements PlaybackSession {
   MpvPlaybackSession(Map<String, String> mpvProperties) {
     // Antes do primeiro open, para a saída de vídeo já estar ligada.
     _controller = VideoController(_player);
     _configured = _applyProperties(mpvProperties);
-    // O mpv mete o URL nas mensagens: sem a query string (o token do
-    // Jellyfin).
-    _errors = _player.stream.error.listen(
-      (message) => _error.value = scrubSecrets(message),
-    );
+    _errors = _player.stream.error.listen(_onPlayerError);
+    _positions = _player.stream.position.listen(_onPosition);
   }
+
+  /// Vídeo que avançou isto depois de um erro recuperou sozinho.
+  static const _recoveredAfter = Duration(seconds: 2);
 
   final _player = Player();
   late final VideoController _controller;
   late final Future<void> _configured;
   late final StreamSubscription<String> _errors;
+  late final StreamSubscription<Duration> _positions;
   final _liveChannel = ValueNotifier<int?>(null);
   final _error = ValueNotifier<String?>(null);
+
+  /// Posição quando o mpv se queixou; null se o erro atual não veio do
+  /// mpv (ex.: [fail]) ou não há erro.
+  Duration? _errorPosition;
+
+  /// O media_kit passa como erro todas as mensagens de nível "error" do
+  /// mpv, também as de coisas que não impedem o vídeo de tocar.
+  void _onPlayerError(String message) {
+    if (isHarmlessPlayerError(message)) return;
+    // O mpv mete o URL nas mensagens: sem a query string (o token do
+    // Jellyfin).
+    _error.value = scrubSecrets(message);
+    _errorPosition = _player.state.position;
+  }
+
+  /// O mpv também se queixa do que resolve sozinho (ex.: uma ligação que
+  /// caiu e voltou): se o vídeo continua a avançar, não há erro a mostrar.
+  void _onPosition(Duration position) {
+    final since = _errorPosition;
+    if (since == null || position - since < _recoveredAfter) return;
+    _errorPosition = null;
+    _error.value = null;
+  }
+
+  void _clearError() {
+    _errorPosition = null;
+    _error.value = null;
+  }
 
   @override
   ValueListenable<int?> get liveChannel => _liveChannel;
@@ -166,7 +206,7 @@ class MpvPlaybackSession implements PlaybackSession {
     await _configured;
     // Antes de abrir o novo: a posição lida ainda é a do stream anterior.
     _endReport();
-    _error.value = null;
+    _clearError();
     _liveChannel.value = liveChannelId;
     _startReport(reporter, start ?? Duration.zero);
     await _player.open(
@@ -184,6 +224,7 @@ class MpvPlaybackSession implements PlaybackSession {
   Future<void> fail(String message, {int? liveChannelId}) async {
     _endReport();
     _liveChannel.value = liveChannelId;
+    _errorPosition = null;
     _error.value = message;
     await _player.stop();
   }
@@ -192,7 +233,7 @@ class MpvPlaybackSession implements PlaybackSession {
   Future<void> stop() async {
     _endReport();
     _liveChannel.value = null;
-    _error.value = null;
+    _clearError();
     await _player.stop();
   }
 
@@ -240,6 +281,7 @@ class MpvPlaybackSession implements PlaybackSession {
   void dispose() {
     _endReport();
     _errors.cancel();
+    _positions.cancel();
     _player.dispose();
     _liveChannel.dispose();
     _error.dispose();
