@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Logo completo ("Lost the Game · IPTV Service"), desenhado sobre papel.
+/// Logo completo ("SoPro Media"), desenhado sobre papel.
 ///
 /// No tema claro o papel é a própria cor de fundo e o logo assenta sem
 /// moldura; no escuro fica como um cartão.
@@ -20,13 +20,13 @@ class BrandLogo extends StatelessWidget {
         cacheWidth: (width * MediaQuery.devicePixelRatioOf(context)).round(),
         fit: BoxFit.contain,
         filterQuality: FilterQuality.medium,
-        semanticLabel: 'Lost the Game, IPTV Service',
+        semanticLabel: 'SoPro Media',
       ),
     );
   }
 }
 
-/// Ícone da app (a TV do logo), para a navegação.
+/// Ícone da app (o play do logo), para a navegação.
 class BrandIcon extends StatelessWidget {
   const BrandIcon({super.key, this.size = 44});
 

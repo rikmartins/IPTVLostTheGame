@@ -10,9 +10,15 @@
 namespace vpn_helper {
 namespace {
 
-// Tem de coincidir com lib/data/vpn/windows_vpn_backend.dart.
+// Tem de coincidir com lib/data/vpn/windows_vpn_backend.dart. Ficou com o
+// nome antigo da app de propósito: é o serviço já instalado nos PCs.
 constexpr wchar_t kServiceName[] = L"LostTheGameVPN";
-constexpr wchar_t kDisplayName[] = L"Lost the Game VPN";
+constexpr wchar_t kDisplayName[] = L"SoPro Media VPN";
+
+// Pastas dos binários (em Program Files): a atual e a de antes da mudança
+// de nome da app, que se apaga quando o serviço é reinstalado.
+constexpr wchar_t kFolderName[] = L"SoPro Media VPN";
+constexpr wchar_t kLegacyFolderName[] = L"Lost the Game VPN";
 
 // O que o wireguard_flutter_plus junta ao build (ver o CMake dele).
 constexpr const wchar_t* kBinaries[] = {L"wireguard_svc.exe", L"tunnel.dll",
@@ -79,7 +85,7 @@ int Install(const std::wstring& config_path) {
   // O serviço corre como SYSTEM: os binários vão para uma pasta que só o
   // administrador pode alterar. A pasta da app não serve, porque na
   // instalação por utilizador qualquer programa do utilizador lhe escreve.
-  const std::wstring target = program_files + L"\\Lost the Game VPN";
+  const std::wstring target = program_files + L"\\" + kFolderName;
   ::CreateDirectoryW(target.c_str(), nullptr);
 
   SC_HANDLE manager = ::OpenSCManagerW(nullptr, nullptr, SC_MANAGER_ALL_ACCESS);
@@ -125,11 +131,19 @@ int Install(const std::wstring& config_path) {
     }
   }
 
+  // O serviço já aponta para a pasta nova (e estava parado): os binários da
+  // pasta antiga deixaram de ser usados. Se falhar, só fica lixo.
+  const std::wstring legacy = program_files + L"\\" + kLegacyFolderName;
+  for (const wchar_t* file : kBinaries) {
+    ::DeleteFileW((legacy + L"\\" + file).c_str());
+  }
+  ::RemoveDirectoryW(legacy.c_str());
+
   // Como o próprio plugin faz: o túnel precisa de SID de serviço.
   SERVICE_SID_INFO sid_info{SERVICE_SID_TYPE_UNRESTRICTED};
   ::ChangeServiceConfig2W(service, SERVICE_CONFIG_SERVICE_SID_INFO,
                           &sid_info);
-  wchar_t description[] = L"Tunel WireGuard da app Lost the Game.";
+  wchar_t description[] = L"Tunel WireGuard da app SoPro Media.";
   SERVICE_DESCRIPTIONW service_description{description};
   ::ChangeServiceConfig2W(service, SERVICE_CONFIG_DESCRIPTION,
                           &service_description);

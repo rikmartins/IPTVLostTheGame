@@ -6,7 +6,7 @@ flutter_launcher_icons:
   android: true
   # Ícone adaptativo: o desenho desvanece para o fundo cor de papel do logo,
   # por isso qualquer máscara (círculo, squircle...) fica limpa.
-  adaptive_icon_background: "#F5F4EE"
+  adaptive_icon_background: "#FCFAF5"
   adaptive_icon_foreground: "tool/branding/icon_foreground_1024.png"
 
   ios: true

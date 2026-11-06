@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Instalador MSI (WiX Toolset 5). Gerado por build-installers.ps1:
-    wix build lostthegame.wxs -arch x64 -d AppVersion=1.2.3
+    wix build sopromedia.wxs -arch x64 -d AppVersion=1.2.3
               -bindpath Release=<build\windows\x64\runner\Release>
 
   Instalação para todos os utilizadores em Program Files (o normal num MSI,
   e o que serve para distribuir por GPO/Intune). Quem quer atualizações
-  sem UAC usa o IPTV-Setup-*.exe, que instala por utilizador.
+  sem UAC usa o SoProMedia-Setup.exe, que instala por utilizador.
 -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <!-- UpgradeCode: nunca mudar; é o que faz cada versão substituir a
        anterior em vez de ficarem as duas instaladas. -->
   <Package
-      Name="Lost the Game"
+      Name="SoPro Media"
       Manufacturer="iptvapp"
       Version="$(var.AppVersion)"
       UpgradeCode="{E6ADB481-76D2-44D0-902A-8AE9484A674F}"
@@ -20,7 +20,7 @@
       Compressed="yes">
 
     <MajorUpgrade
-        DowngradeErrorMessage="Já está instalada uma versão mais recente do Lost the Game." />
+        DowngradeErrorMessage="Já está instalada uma versão mais recente do SoPro Media." />
     <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
 
     <Icon Id="AppIcon.ico" SourceFile="$(sys.SOURCEFILEDIR)..\runner\resources\app_icon.ico" />
@@ -28,7 +28,7 @@
     <Property Id="ARPURLINFOABOUT" Value="https://github.com/rikmartins/IPTVLostTheGame" />
 
     <StandardDirectory Id="ProgramFiles64Folder">
-      <Directory Id="INSTALLFOLDER" Name="Lost the Game">
+      <Directory Id="INSTALLFOLDER" Name="SoPro Media">
         <!-- Tudo o que o `flutter build windows` produz (exe, DLLs,
              libmpv, data/), mais o runtime do Visual C++ que o script
              copia para lá. -->
@@ -40,13 +40,13 @@
       <Component Id="StartMenuShortcut">
         <Shortcut
             Id="StartMenuShortcut"
-            Name="Lost the Game"
+            Name="SoPro Media"
             Target="[INSTALLFOLDER]iptv_app.exe"
             WorkingDirectory="INSTALLFOLDER"
             Icon="AppIcon.ico" />
         <RegistryValue
             Root="HKMU"
-            Key="Software\iptvapp\Lost the Game"
+            Key="Software\iptvapp\SoPro Media"
             Name="StartMenuShortcut"
             Type="integer"
             Value="1"

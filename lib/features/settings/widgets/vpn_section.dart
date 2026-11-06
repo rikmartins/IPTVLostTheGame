@@ -151,7 +151,7 @@ class _Configured extends ConsumerWidget {
         if (Platform.isWindows && vpn.kind == VpnKind.ikev2)
           const SettingsHint(
             'Usa o IKEv2 do próprio Windows: aparece no ícone de rede como '
-            '«Lost the Game IKEv2» e fica ligada em todo o sistema, também '
+            '«SoPro Media IKEv2» e fica ligada em todo o sistema, também '
             'com a app fechada, até a desligares aqui ou aí.',
           ),
         if (Platform.isAndroid && vpn.kind == VpnKind.ikev2)

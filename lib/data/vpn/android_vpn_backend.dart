@@ -21,7 +21,7 @@ class AndroidVpnBackend implements VpnBackend {
 
   Future<void> _ensureInitialized() => _initialized ??= _wireGuard.initialize(
     interfaceName: 'LostTheGame',
-    vpnName: 'Lost the Game',
+    vpnName: 'SoPro Media',
   );
 
   @override

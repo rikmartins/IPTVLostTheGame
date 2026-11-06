@@ -482,7 +482,7 @@ void main() {
 
     test('cabeçalho de autenticação no formato do Jellyfin', () {
       final header = JellyfinClient.authorization(deviceId: 'd1', token: 't1');
-      expect(header, startsWith('MediaBrowser Client="Lost the Game", '));
+      expect(header, startsWith('MediaBrowser Client="SoPro Media", '));
       expect(header, contains('DeviceId="d1"'));
       expect(header, endsWith('Token="t1"'));
     });

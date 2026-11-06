@@ -9,7 +9,7 @@ import 'ikev2_backend.dart';
 import 'ikev2_config.dart';
 import 'vpn_backend.dart';
 
-/// IKEv2 do próprio Windows: uma ligação VPN do utilizador ("Lost the Game
+/// IKEv2 do próprio Windows: uma ligação VPN do utilizador ("SoPro Media
 /// IKEv2", aparece também no ícone de rede), sem administrador e sem nada
 /// instalado.
 ///
@@ -18,7 +18,11 @@ import 'vpn_backend.dart';
 /// ligação com a API do EapHost (`EapHostPeerCredentialsXml2Blob` +
 /// `RasSetEapUserData`) e só depois se marca.
 class WindowsIkev2Backend implements Ikev2Backend {
-  static const entryName = 'Lost the Game IKEv2';
+  static const entryName = 'SoPro Media IKEv2';
+
+  /// Nome da ligação antes da mudança de nome da app: o script de ligação
+  /// apaga-a e, até lá, ainda conta como ligada e é desligada daqui.
+  static const legacyEntryName = 'Lost the Game IKEv2';
 
   @override
   Future<bool> isSupported() async => true;
@@ -89,10 +93,12 @@ class WindowsIkev2Backend implements Ikev2Backend {
 
   @override
   Future<void> disconnect() async {
-    try {
-      await Process.run('rasdial.exe', const [entryName, '/disconnect']);
-    } catch (_) {
-      // Já desligada ou sem a ligação: nada a fazer.
+    for (final name in const [entryName, legacyEntryName]) {
+      try {
+        await Process.run('rasdial.exe', [name, '/disconnect']);
+      } catch (_) {
+        // Já desligada ou sem a ligação: nada a fazer.
+      }
     }
   }
 
@@ -104,8 +110,10 @@ class WindowsIkev2Backend implements Ikev2Backend {
         '-NoProfile',
         '-NonInteractive',
         '-Command',
-        "Remove-VpnConnection -Name '$entryName' -Force "
-            '-ErrorAction SilentlyContinue',
+        // Uma a uma: a que não existe não impede a outra de ser apagada.
+        "'$entryName', '$legacyEntryName' | ForEach-Object { "
+            r'Remove-VpnConnection -Name $_ -Force '
+            '-ErrorAction SilentlyContinue }',
       ]);
     } catch (_) {
       // Fica a ligação no Windows; a próxima configuração substitui-a.
@@ -130,7 +138,12 @@ class WindowsIkev2Backend implements Ikev2Backend {
 VpnStatus parseRasdialStatus(String output) {
   final connected = const LineSplitter()
       .convert(output)
-      .any((line) => line.trim() == WindowsIkev2Backend.entryName);
+      .map((line) => line.trim())
+      .any(
+        (line) =>
+            line == WindowsIkev2Backend.entryName ||
+            line == WindowsIkev2Backend.legacyEntryName,
+      );
   return connected ? VpnStatus.connected : VpnStatus.disconnected;
 }
 
@@ -173,13 +186,14 @@ function Read-Value { [Text.Encoding]::UTF8.GetString([Convert]::FromBase64Strin
 $server = Read-Value
 $user = Read-Value
 $pass = Read-Value
-$name = 'Lost the Game IKEv2'
+$name = 'SoPro Media IKEv2'
+$legacy = 'Lost the Game IKEv2'
 $pbk = Join-Path $env:APPDATA 'Microsoft\Network\Connections\Pbk\rasphone.pbk'
 
 Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
-public static class LostTheGameEap {
+public static class SoProMediaEap {
   [StructLayout(LayoutKind.Sequential)]
   public struct EAP_TYPE { public byte type; public uint dwVendorId; public uint dwVendorType; }
   [StructLayout(LayoutKind.Sequential)]
@@ -251,15 +265,16 @@ public static class LostTheGameEap {
 '@
 
 try {
-  $existing = Get-VpnConnection -Name $name -ErrorAction SilentlyContinue
-  if ($existing) {
-    & rasdial.exe $name /disconnect | Out-Null
-    Remove-VpnConnection -Name $name -Force
+  foreach ($old in @($name, $legacy)) {
+    if (Get-VpnConnection -Name $old -ErrorAction SilentlyContinue) {
+      & rasdial.exe $old /disconnect | Out-Null
+      Remove-VpnConnection -Name $old -Force
+    }
   }
   Add-VpnConnection -Name $name -ServerAddress $server -TunnelType Ikev2 `
     -EncryptionLevel Required -AuthenticationMethod Eap -SplitTunneling:$false -Force
   $config = (Get-VpnConnection -Name $name).EapConfigXmlStream.OuterXml
-  $set = [LostTheGameEap]::Set($pbk, $name, $config, $user, $pass)
+  $set = [SoProMediaEap]::Set($pbk, $name, $config, $user, $pass)
   if ($set -ne 'ok') { "ERROR=$set"; exit 0 }
   & rasdial.exe $name | Out-Null
   "RESULT=$LASTEXITCODE"

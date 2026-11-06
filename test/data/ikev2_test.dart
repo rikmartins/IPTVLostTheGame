@@ -61,6 +61,13 @@ void main() {
     test('estado a partir do rasdial', () {
       expect(
         parseRasdialStatus(
+          'Ligado a\r\nSoPro Media IKEv2\r\nComando concluído.',
+        ),
+        VpnStatus.connected,
+      );
+      // Ligação criada antes da mudança de nome da app.
+      expect(
+        parseRasdialStatus(
           'Ligado a\r\nLost the Game IKEv2\r\nComando concluído.',
         ),
         VpnStatus.connected,

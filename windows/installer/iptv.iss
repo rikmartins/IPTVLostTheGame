@@ -5,7 +5,7 @@
 #ifndef AppVersion
   #define AppVersion "0.0.0"
 #endif
-#define AppName "Lost the Game"
+#define AppName "SoPro Media"
 #define AppExe "iptv_app.exe"
 
 [Setup]
@@ -24,7 +24,7 @@ DisableProgramGroupPage=yes
 OutputDir=..\..\build\installer
 ; Nome fixo (sem versão) para o link "releases/latest/download" do README;
 ; o "Setup" no nome é o que a app procura na release (ver pickAsset).
-OutputBaseFilename=LostTheGame-Setup
+OutputBaseFilename=SoProMedia-Setup
 Compression=lzma2/ultra64
 SolidCompression=yes
 ArchitecturesAllowed=x64compatible
@@ -44,6 +44,12 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "..\..\build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+[InstallDelete]
+; Atalhos com o nome antigo da app. A pasta de instalação não muda: numa
+; atualização o Inno Setup usa sempre a da instalação anterior.
+Type: files; Name: "{autoprograms}\Lost the Game.lnk"
+Type: files; Name: "{autodesktop}\Lost the Game.lnk"
 
 [Icons]
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"

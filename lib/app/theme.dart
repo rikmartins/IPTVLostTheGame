@@ -2,20 +2,21 @@ import 'package:flutter/material.dart';
 
 import '../data/local/models/app_settings.dart';
 
-/// Cores tiradas do logo "Lost the Game" (aguarela sobre papel).
+/// Cores tiradas do logo "SoPro Media" (aguarela sobre papel).
 abstract final class BrandColors {
   /// Fundo do logo. Também é o fundo do tema claro, por isso o logo assenta
   /// na app sem moldura.
-  static const paper = Color(0xFFF5F4EE);
+  static const paper = Color(0xFFFBF6EF);
 
-  /// Folhas e botão de play: semente da paleta Material.
-  static const leaf = Color(0xFF5E8F4E);
+  /// "SOPRO" (verde-azulado escuro): semente da paleta Material.
+  static const ink = Color(0xFF21615A);
 
-  /// "LOST": acento castanho (tertiary).
-  static const bark = Color(0xFF926035);
+  /// Folhas cor de ocre: acento (tertiary).
+  static const ochre = Color(0xFF7A5F12);
 
-  /// Fundo do tema escuro: verde quase preto, em vez de cinzento neutro.
-  static const night = Color(0xFF111511);
+  /// Fundo do tema escuro: verde-azulado quase preto, em vez de cinzento
+  /// neutro.
+  static const night = Color(0xFF0F1514);
 }
 
 extension ThemePreferenceMode on ThemePreference {
@@ -39,18 +40,18 @@ ThemeData _buildTheme(Brightness brightness) {
   final light = brightness == Brightness.light;
   final scheme =
       ColorScheme.fromSeed(
-        seedColor: BrandColors.leaf,
+        seedColor: BrandColors.ink,
         brightness: brightness,
       ).copyWith(
         surface: light ? BrandColors.paper : BrandColors.night,
-        tertiary: light ? BrandColors.bark : const Color(0xFFE2B48A),
-        onTertiary: light ? Colors.white : const Color(0xFF462A10),
+        tertiary: light ? BrandColors.ochre : const Color(0xFFE3C66F),
+        onTertiary: light ? Colors.white : const Color(0xFF3D2F00),
         tertiaryContainer: light
-            ? const Color(0xFFF4DEC8)
-            : const Color(0xFF6A4424),
+            ? const Color(0xFFF6E1A6)
+            : const Color(0xFF5B4700),
         onTertiaryContainer: light
-            ? const Color(0xFF2F1704)
-            : const Color(0xFFFFDCC2),
+            ? const Color(0xFF261900)
+            : const Color(0xFFFFE08E),
       );
 
   return ThemeData(

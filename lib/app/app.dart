@@ -8,7 +8,7 @@ import 'session_controller.dart';
 import 'settings_controller.dart';
 import 'theme.dart';
 
-const appName = 'Lost the Game';
+const appName = 'SoPro Media';
 
 class IptvApp extends ConsumerWidget {
   const IptvApp({super.key});

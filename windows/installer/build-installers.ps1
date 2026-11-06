@@ -1,8 +1,8 @@
 ﻿<#
 .SYNOPSIS
   Gera os instaladores Windows a partir de `flutter build windows --release`:
-    build\installer\LostTheGame-Setup.exe     Inno Setup, por utilizador
-    build\installer\LostTheGame-Windows.msi   WiX 5, para todos os utilizadores
+    build\installer\SoProMedia-Setup.exe      Inno Setup, por utilizador
+    build\installer\SoProMedia-Windows.msi    WiX 5, para todos os utilizadores
   Nomes fixos (sem versão): o README liga a releases/latest/download/<nome>.
 
 .EXAMPLE
@@ -55,11 +55,11 @@ if (-not (Get-Command wix -ErrorAction SilentlyContinue)) {
   if ($LASTEXITCODE -ne 0) { throw 'Não foi possível instalar o WiX (dotnet tool).' }
   $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
 }
-& wix build (Join-Path $PSScriptRoot 'lostthegame.wxs') `
+& wix build (Join-Path $PSScriptRoot 'sopromedia.wxs') `
   -arch x64 `
   -d "AppVersion=$numericVersion" `
   -bindpath "Release=$release" `
-  -o (Join-Path $out "LostTheGame-Windows.msi")
+  -o (Join-Path $out "SoProMedia-Windows.msi")
 if ($LASTEXITCODE -ne 0) { throw "WiX falhou ($LASTEXITCODE)" }
 
 Get-ChildItem $out -File | Where-Object { $_.Extension -in '.exe', '.msi' } |

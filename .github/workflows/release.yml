@@ -3,10 +3,10 @@
 #   git tag v0.2.0 && git push origin v0.2.0
 #
 # Cada release tem sempre os quatro ficheiros, ou não é publicada:
-#   LostTheGame-Android.apk     telemóveis e tablets
-#   LostTheGame-AndroidTV.apk   Android TV
-#   LostTheGame-Setup.exe       Windows, por utilizador (atualiza sem UAC)
-#   LostTheGame-Windows.msi     Windows, para todos os utilizadores
+#   SoProMedia-Android.apk      telemóveis e tablets
+#   SoProMedia-AndroidTV.apk    Android TV
+#   SoProMedia-Setup.exe        Windows, por utilizador (atualiza sem UAC)
+#   SoProMedia-Windows.msi      Windows, para todos os utilizadores
 #
 # Os nomes não levam a versão de propósito: o README liga a
 # https://github.com/<repo>/releases/latest/download/<nome>, que aponta
@@ -101,8 +101,8 @@ jobs:
       - name: Nomes finais
         run: |
           mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-mobile-release.apk dist/LostTheGame-Android.apk
-          cp build/app/outputs/flutter-apk/app-tv-release.apk dist/LostTheGame-AndroidTV.apk
+          cp build/app/outputs/flutter-apk/app-mobile-release.apk dist/SoProMedia-Android.apk
+          cp build/app/outputs/flutter-apk/app-tv-release.apk dist/SoProMedia-AndroidTV.apk
 
       - uses: actions/upload-artifact@v7
         with:
@@ -175,10 +175,10 @@ jobs:
       - name: Confirmar os quatro ficheiros
         run: |
           for file in \
-            LostTheGame-Android.apk \
-            LostTheGame-AndroidTV.apk \
-            LostTheGame-Setup.exe \
-            LostTheGame-Windows.msi; do
+            SoProMedia-Android.apk \
+            SoProMedia-AndroidTV.apk \
+            SoProMedia-Setup.exe \
+            SoProMedia-Windows.msi; do
             if [ ! -f "dist/$file" ]; then
               echo "::error::Falta $file: a release não é publicada incompleta."
               exit 1
@@ -188,7 +188,7 @@ jobs:
 
       - uses: softprops/action-gh-release@v3
         with:
-          name: Lost the Game ${{ github.ref_name }}
+          name: SoPro Media ${{ github.ref_name }}
           files: dist/*
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-') }}

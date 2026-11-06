@@ -1,7 +1,7 @@
 name: iptv_app
 description: Cliente IPTV multiplataforma (Xtream Codes) focado em desempenho.
 publish_to: 'none'
-version: 0.1.9+10
+version: 0.1.10+11
 
 environment:
   # Flutter 3.47.9 (stable, 29/10/2026) traz o Dart 3.13.7.

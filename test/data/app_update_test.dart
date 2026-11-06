@@ -64,17 +64,17 @@ void main() {
 
     group('formato publicado pelo workflow de release', () {
       final release = [
-        _asset('LostTheGame-Android.apk'),
-        _asset('LostTheGame-AndroidTV.apk'),
-        _asset('LostTheGame-Setup.exe'),
-        _asset('LostTheGame-Windows.msi'),
+        _asset('SoProMedia-Android.apk'),
+        _asset('SoProMedia-AndroidTV.apk'),
+        _asset('SoProMedia-Setup.exe'),
+        _asset('SoProMedia-Windows.msi'),
       ];
 
       test('o telemóvel recebe o APK de telemóvel', () {
         expect(
           pickAsset(release, UpdatePlatform.android, androidAbi: 'arm64-v8a')
               ?.name,
-          'LostTheGame-Android.apk',
+          'SoProMedia-Android.apk',
         );
       });
 
@@ -86,14 +86,14 @@ void main() {
             androidAbi: 'armeabi-v7a',
             androidVariant: AndroidVariant.tv,
           )?.name,
-          'LostTheGame-AndroidTV.apk',
+          'SoProMedia-AndroidTV.apk',
         );
       });
 
       test('no Windows o .exe ganha ao .msi', () {
         expect(
           pickAsset(release, UpdatePlatform.windows)?.name,
-          'LostTheGame-Setup.exe',
+          'SoProMedia-Setup.exe',
         );
       });
 

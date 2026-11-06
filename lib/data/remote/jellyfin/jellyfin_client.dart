@@ -67,7 +67,7 @@ enum PlaybackEvent { started, progress, stopped }
 class JellyfinClient {
   JellyfinClient(this.credentials, {Dio? dio}) : _dio = dio ?? createDio();
 
-  static const clientName = 'Lost the Game';
+  static const clientName = 'SoPro Media';
 
   /// Informativo: aparece no painel do servidor (Dispositivos).
   static const clientVersion = '1';
@@ -566,7 +566,7 @@ class JellyfinClient {
 /// insistir em converter (ex.: limite de débito configurado para o
 /// utilizador), pede HLS com H.264/HEVC.
 const _deviceProfile = <String, Object>{
-  'Name': 'Lost the Game (mpv)',
+  'Name': 'SoPro Media (mpv)',
   'MaxStreamingBitrate': JellyfinClient._maxBitrate,
   'MaxStaticBitrate': JellyfinClient._maxBitrate,
   'DirectPlayProfiles': [

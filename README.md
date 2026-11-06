@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="assets/branding/logo.webp" alt="Lost the Game — IPTV Service" width="460">
+  <img src="assets/branding/logo.webp" alt="SoPro Media" width="460">
 </p>
 
 <p align="center">
-  <a href="https://github.com/rikmartins/IPTVLostTheGame/releases/latest"><img src="https://img.shields.io/github/v/release/rikmartins/IPTVLostTheGame?label=%C3%BAltima%20vers%C3%A3o&color=5E8F4E" alt="Última versão"></a>
+  <a href="https://github.com/rikmartins/IPTVLostTheGame/releases/latest"><img src="https://img.shields.io/github/v/release/rikmartins/IPTVLostTheGame?label=%C3%BAltima%20vers%C3%A3o&color=21615A" alt="Última versão"></a>
 </p>
 
 ## Download
@@ -12,14 +12,17 @@ Os links descarregam sempre a versão mais recente.
 
 | Dispositivo | Download direto |
 |---|---|
-| Android (telemóvel e tablet) | [LostTheGame-Android.apk](https://github.com/rikmartins/IPTVLostTheGame/releases/latest/download/LostTheGame-Android.apk) |
-| Android TV | [LostTheGame-AndroidTV.apk](https://github.com/rikmartins/IPTVLostTheGame/releases/latest/download/LostTheGame-AndroidTV.apk) |
-| Windows (instalador) | [LostTheGame-Setup.exe](https://github.com/rikmartins/IPTVLostTheGame/releases/latest/download/LostTheGame-Setup.exe) |
-| Windows (MSI) | [LostTheGame-Windows.msi](https://github.com/rikmartins/IPTVLostTheGame/releases/latest/download/LostTheGame-Windows.msi) |
+| Android (telemóvel e tablet) | [SoProMedia-Android.apk](https://github.com/rikmartins/IPTVLostTheGame/releases/latest/download/SoProMedia-Android.apk) |
+| Android TV | [SoProMedia-AndroidTV.apk](https://github.com/rikmartins/IPTVLostTheGame/releases/latest/download/SoProMedia-AndroidTV.apk) |
+| Windows (instalador) | [SoProMedia-Setup.exe](https://github.com/rikmartins/IPTVLostTheGame/releases/latest/download/SoProMedia-Setup.exe) |
+| Windows (MSI) | [SoProMedia-Windows.msi](https://github.com/rikmartins/IPTVLostTheGame/releases/latest/download/SoProMedia-Windows.msi) |
 
 **Android / Android TV:** ao abrir o APK, o Android pede para autorizar a
 instalação de apps desconhecidas para o browser (ou para a app que usaste
-para descarregar, como a *Downloader* na TV).
+para descarregar, como a *Downloader* na TV). A seguir o Google Play Protect
+pode pedir para analisar a app (*Analisar app*): acontece com cada versão
+nova, porque a app não vem da Play Store e a Google ainda não conhece esse
+APK. A análise demora poucos segundos e a instalação continua.
 
 **Windows:** o `.exe` instala só para o teu utilizador e as atualizações não
 pedem administrador; o `.msi` instala para todos os utilizadores do PC. Como
@@ -105,7 +108,9 @@ flutter run --flavor tv       # Android TV
 
 No Android há duas variantes (flavors) com o mesmo identificador
 (`com.iptvapp.lostthegame`): `mobile` e `tv`. Só o manifest muda
-(`android/app/src/tv`: launcher e banner da TV).
+(`android/app/src/tv`: launcher e banner da TV). O identificador vem do
+nome antigo da app e nunca muda: com outro, o Android trata-a como uma app
+diferente e não atualiza a instalada.
 
 ## Publicar uma versão
 

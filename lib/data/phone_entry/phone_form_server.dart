@@ -328,10 +328,10 @@ $fields
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Lost the Game</title>
+<title>SoPro Media</title>
 <style>
-:root{--bg:#f6f7f3;--card:#fff;--text:#1d2419;--muted:#5d6657;--accent:#5e8f4e;--line:#d6dbd0;--error:#b3261e}
-@media (prefers-color-scheme:dark){:root{--bg:#121510;--card:#1c2119;--text:#e3e8dc;--muted:#a3ad9b;--accent:#8fc27c;--line:#384033;--error:#f2b8b5}}
+:root{--bg:#fbf6ef;--card:#fff;--text:#172322;--muted:#566664;--accent:#21615a;--line:#d3dcd9;--error:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1514;--card:#19201f;--text:#dde8e5;--muted:#9fb0ac;--accent:#7cc5bb;--line:#33403e;--error:#f2b8b5}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 main{max-width:480px;margin:0 auto;padding:24px 16px 40px}
@@ -352,7 +352,7 @@ button:disabled{opacity:.6}
 .done{font-size:3rem;color:var(--accent);line-height:1}
 </style>
 </head>
-<body><main><div class="brand">LOST THE GAME</div><div class="card">
+<body><main><div class="brand">SOPRO MEDIA</div><div class="card">
 $body
 </div></main></body>
 </html>''';
