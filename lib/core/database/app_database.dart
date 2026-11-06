@@ -7,12 +7,14 @@ import 'package:path_provider/path_provider.dart';
 import '../../data/local/models/account_info.dart';
 import '../../data/local/models/app_settings.dart';
 import '../../data/local/models/epg_programme.dart';
+import '../../data/local/models/favorite_channel.dart';
 import '../../data/local/models/hidden_category.dart';
 import '../../data/local/models/live_channel.dart';
 import '../../data/local/models/media_category.dart';
 import '../../data/local/models/sync_state.dart';
 import '../../data/local/models/tv_series.dart';
 import '../../data/local/models/vod_movie.dart';
+import '../../data/local/models/watch_progress.dart';
 
 /// Ponto único de abertura do Isar.
 ///
@@ -48,6 +50,8 @@ class AppDatabase {
     SyncStateSchema,
     AppSettingsSchema,
     HiddenCategorySchema,
+    FavoriteChannelSchema,
+    WatchProgressSchema,
   ];
 
   static Future<AppDatabase> open() async {
@@ -89,7 +93,8 @@ class AppDatabase {
       Isar.getInstance(name) ?? await openInstance(directory, name: name);
 
   /// Tudo o que vem do fornecedor, e as escolhas sobre ele (grupos
-  /// ocultos). As definições do dispositivo ficam.
+  /// ocultos, favoritos, o que se estava a ver). As definições do
+  /// dispositivo ficam.
   static Future<void> clearCatalog(Isar isar) {
     return isar.writeTxn(() async {
       await isar.accounts.clear();
@@ -100,6 +105,8 @@ class AppDatabase {
       await isar.epgProgrammes.clear();
       await isar.syncStates.clear();
       await isar.hiddenCategories.clear();
+      await isar.favoriteChannels.clear();
+      await isar.watchProgress.clear();
     });
   }
 

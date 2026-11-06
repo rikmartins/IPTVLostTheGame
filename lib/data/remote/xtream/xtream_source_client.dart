@@ -1,6 +1,8 @@
 import 'package:isar_community/isar.dart';
 
 import '../../local/models/account_info.dart';
+import '../../local/models/epg_programme.dart';
+import '../../local/models/live_channel.dart';
 import '../../local/models/vod_movie.dart';
 import '../../sources/credentials.dart';
 import '../../sources/series_episode.dart';
@@ -49,6 +51,29 @@ class XtreamSourceClient implements SourceClient {
   @override
   Future<PlaybackRequest?> episode(SeriesEpisode episode) async =>
       PlaybackRequest(_urls.episode(episode.id, episode.containerExtension));
+
+  /// A hora vai na hora local do servidor (medida no login); sem ela,
+  /// usa-se a do dispositivo, que quase sempre é a mesma.
+  @override
+  Future<PlaybackRequest?> catchup(
+    int channelId,
+    EpgProgramme programme,
+  ) async {
+    final channel = isar.liveChannels.getSync(channelId);
+    if (channel == null || !channel.hasCatchup) return null;
+    final offsetMinutes = isar.accounts.getSync(0)?.serverUtcOffsetMinutes;
+    final offset = offsetMinutes == null
+        ? programme.start.toLocal().timeZoneOffset
+        : Duration(minutes: offsetMinutes);
+    final minutes = programme.stop.difference(programme.start).inMinutes;
+    return PlaybackRequest(
+      _urls.timeshift(
+        channelId,
+        programme.start.toUtc().add(offset),
+        minutes < 1 ? 1 : minutes,
+      ),
+    );
+  }
 
   @override
   bool get tracksProgress => false;

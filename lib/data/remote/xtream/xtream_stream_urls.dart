@@ -18,6 +18,16 @@ class XtreamStreamUrls {
   String episode(String episodeId, String containerExtension) =>
       '$_base/series/$_user/$_pass/$episodeId.$containerExtension';
 
+  /// Catch-up: [minutes] a partir de [serverStart], que tem de estar na
+  /// hora local do servidor (só se usam os campos, não o fuso).
+  String timeshift(int streamId, DateTime serverStart, int minutes) {
+    String two(int v) => v.toString().padLeft(2, '0');
+    final s = serverStart;
+    final start =
+        '${s.year}-${two(s.month)}-${two(s.day)}:${two(s.hour)}-${two(s.minute)}';
+    return '$_base/timeshift/$_user/$_pass/$minutes/$start/$streamId.ts';
+  }
+
   String get _base => credentials.serverUrl;
 
   String get _user => Uri.encodeComponent(credentials.username);

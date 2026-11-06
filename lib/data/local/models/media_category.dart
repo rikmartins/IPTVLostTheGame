@@ -9,6 +9,19 @@ enum CategoryType { live, movie, series }
 /// Categoria sem grupo atribuído pelo fornecedor.
 const kNoCategory = -1;
 
+/// Grupos que não vêm do fornecedor e aparecem antes dos dele. Como
+/// `categoryId` nunca coincidem com os do Xtream (inteiros não negativos ou
+/// hashes de 64 bits).
+const kFavoritesGroup = -2;
+
+/// "Continuar a ver" em Filmes e Séries.
+const kContinueGroup = -3;
+
+/// "Adicionados / Atualizados recentemente" mostram só estes: percorrer
+/// 186 mil filmes recentes não serve a ninguém, e a consulta inteira bloqueava
+/// a interface quase um segundo numa TV box.
+const kRecentLimit = 2000;
+
 @Collection(accessor: 'categories')
 class MediaCategory {
   /// Ver [idFor]: os `category_id` do Xtream só são únicos dentro do mesmo

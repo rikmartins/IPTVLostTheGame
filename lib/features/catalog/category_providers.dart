@@ -8,6 +8,8 @@ import '../../data/local/models/media_category.dart';
 import '../../data/local/models/sync_state.dart';
 import '../../data/local/models/tv_series.dart';
 import '../../data/local/models/vod_movie.dart';
+import '../live_tv/favorites.dart';
+import '../player/watch_progress.dart';
 
 extension CategoryTypeSync on CategoryType {
   SyncKind get syncKind => switch (this) {
@@ -31,6 +33,26 @@ final categoriesProvider = Provider.family<List<MediaCategory>, CategoryType>((
       .typeEqualToAnySortIndex(type)
       .findAllSync();
 });
+
+/// Grupos da app (favoritos, continuar a ver), que aparecem antes dos do
+/// fornecedor e só quando têm alguma coisa.
+final specialGroupsProvider = Provider.autoDispose
+    .family<List<({int id, String label})>, CategoryType>((ref, type) {
+      return switch (type) {
+        CategoryType.live => [
+          if (ref.watch(favoriteChannelsProvider).isNotEmpty)
+            (id: kFavoritesGroup, label: 'Favoritos'),
+        ],
+        CategoryType.movie => [
+          if (ref.watch(continueMovieIdsProvider).isNotEmpty)
+            (id: kContinueGroup, label: 'Continuar a ver'),
+        ],
+        CategoryType.series => [
+          if (ref.watch(continueSeriesIdsProvider).isNotEmpty)
+            (id: kContinueGroup, label: 'Continuar a ver'),
+        ],
+      };
+    });
 
 /// `categoryId` dos grupos que o utilizador escondeu numa secção.
 class HiddenCategories extends Notifier<Set<int>> {

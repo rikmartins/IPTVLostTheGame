@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/sync_controller.dart';
 import '../../app/widgets/section_scaffold.dart';
+import '../../core/utils/time_format.dart';
 import '../../data/local/models/media_category.dart';
 import '../catalog/category_providers.dart';
 import '../catalog/widgets/category_list.dart';
 import '../catalog/widgets/poster_grid.dart';
+import '../player/play_vod.dart';
+import '../player/watch_progress.dart';
 import 'series_detail_screen.dart';
 import 'series_providers.dart';
 
@@ -49,7 +52,9 @@ class _SeriesGrid extends ConsumerWidget {
     return PosterGrid(
       storageKey: 'series-$categoryId',
       ids: ids,
-      itemBuilder: (context, id) => _SeriesTile(id: id),
+      itemBuilder: (context, id) => categoryId == kContinueGroup
+          ? _ContinueSeriesTile(id: id)
+          : _SeriesTile(id: id),
     );
   }
 }
@@ -72,6 +77,40 @@ class _SeriesTile extends ConsumerWidget {
         MaterialPageRoute<void>(
           builder: (_) => SeriesDetailScreen(seriesId: series.id),
         ),
+      ),
+    );
+  }
+}
+
+/// "Continuar a ver": retoma logo o episódio a meio, sem passar pela lista.
+class _ContinueSeriesTile extends ConsumerWidget {
+  const _ContinueSeriesTile({required this.id});
+
+  final int id;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final series = ref.watch(seriesItemProvider(id));
+    final record = ref.watch(resumeEpisodeProvider(id));
+    if (series == null || record == null) return const SizedBox.shrink();
+    final episode = episodeFromProgress(record);
+    final label = 'T${episode.season}E${episode.number}';
+
+    return PosterTile(
+      title: series.name,
+      subtitle: '$label · ${formatPosition(record.position)}',
+      imageUrl: series.cover,
+      rating: 0,
+      progress: record.durationMs > 0
+          ? record.positionMs / record.durationMs
+          : null,
+      onTap: () => playVod(
+        context,
+        ref,
+        title: '${series.name} · $label',
+        target: episodeTarget(id, episode),
+        request: (client) => client.episode(episode),
+        resumeNow: true,
       ),
     );
   }

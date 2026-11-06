@@ -53,9 +53,14 @@ const AccountInfoSchema = CollectionSchema(
       name: r'serverTimezone',
       type: IsarType.string,
     ),
-    r'status': PropertySchema(id: 8, name: r'status', type: IsarType.string),
+    r'serverUtcOffsetMinutes': PropertySchema(
+      id: 8,
+      name: r'serverUtcOffsetMinutes',
+      type: IsarType.long,
+    ),
+    r'status': PropertySchema(id: 9, name: r'status', type: IsarType.string),
     r'username': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'username',
       type: IsarType.string,
     ),
@@ -114,8 +119,9 @@ void _accountInfoSerialize(
   writer.writeDateTime(offsets[5], object.lastLoginAt);
   writer.writeLong(offsets[6], object.maxConnections);
   writer.writeString(offsets[7], object.serverTimezone);
-  writer.writeString(offsets[8], object.status);
-  writer.writeString(offsets[9], object.username);
+  writer.writeLong(offsets[8], object.serverUtcOffsetMinutes);
+  writer.writeString(offsets[9], object.status);
+  writer.writeString(offsets[10], object.username);
 }
 
 AccountInfo _accountInfoDeserialize(
@@ -134,8 +140,9 @@ AccountInfo _accountInfoDeserialize(
   object.lastLoginAt = reader.readDateTime(offsets[5]);
   object.maxConnections = reader.readLong(offsets[6]);
   object.serverTimezone = reader.readStringOrNull(offsets[7]);
-  object.status = reader.readString(offsets[8]);
-  object.username = reader.readString(offsets[9]);
+  object.serverUtcOffsetMinutes = reader.readLongOrNull(offsets[8]);
+  object.status = reader.readString(offsets[9]);
+  object.username = reader.readString(offsets[10]);
   return object;
 }
 
@@ -163,8 +170,10 @@ P _accountInfoDeserializeProp<P>(
     case 7:
       return (reader.readStringOrNull(offset)) as P;
     case 8:
-      return (reader.readString(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 9:
+      return (reader.readString(offset)) as P;
+    case 10:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1040,6 +1049,82 @@ extension AccountInfoQueryFilter
     });
   }
 
+  QueryBuilder<AccountInfo, AccountInfo, QAfterFilterCondition>
+  serverUtcOffsetMinutesIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'serverUtcOffsetMinutes'),
+      );
+    });
+  }
+
+  QueryBuilder<AccountInfo, AccountInfo, QAfterFilterCondition>
+  serverUtcOffsetMinutesIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'serverUtcOffsetMinutes'),
+      );
+    });
+  }
+
+  QueryBuilder<AccountInfo, AccountInfo, QAfterFilterCondition>
+  serverUtcOffsetMinutesEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'serverUtcOffsetMinutes',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AccountInfo, AccountInfo, QAfterFilterCondition>
+  serverUtcOffsetMinutesGreaterThan(int? value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'serverUtcOffsetMinutes',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AccountInfo, AccountInfo, QAfterFilterCondition>
+  serverUtcOffsetMinutesLessThan(int? value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'serverUtcOffsetMinutes',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AccountInfo, AccountInfo, QAfterFilterCondition>
+  serverUtcOffsetMinutesBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'serverUtcOffsetMinutes',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
   QueryBuilder<AccountInfo, AccountInfo, QAfterFilterCondition> statusEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1428,6 +1513,20 @@ extension AccountInfoQuerySortBy
     });
   }
 
+  QueryBuilder<AccountInfo, AccountInfo, QAfterSortBy>
+  sortByServerUtcOffsetMinutes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'serverUtcOffsetMinutes', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AccountInfo, AccountInfo, QAfterSortBy>
+  sortByServerUtcOffsetMinutesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'serverUtcOffsetMinutes', Sort.desc);
+    });
+  }
+
   QueryBuilder<AccountInfo, AccountInfo, QAfterSortBy> sortByStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'status', Sort.asc);
@@ -1555,6 +1654,20 @@ extension AccountInfoQuerySortThenBy
     });
   }
 
+  QueryBuilder<AccountInfo, AccountInfo, QAfterSortBy>
+  thenByServerUtcOffsetMinutes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'serverUtcOffsetMinutes', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AccountInfo, AccountInfo, QAfterSortBy>
+  thenByServerUtcOffsetMinutesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'serverUtcOffsetMinutes', Sort.desc);
+    });
+  }
+
   QueryBuilder<AccountInfo, AccountInfo, QAfterSortBy> thenByStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'status', Sort.asc);
@@ -1637,6 +1750,13 @@ extension AccountInfoQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AccountInfo, AccountInfo, QDistinct>
+  distinctByServerUtcOffsetMinutes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'serverUtcOffsetMinutes');
+    });
+  }
+
   QueryBuilder<AccountInfo, AccountInfo, QDistinct> distinctByStatus({
     bool caseSensitive = true,
   }) {
@@ -1709,6 +1829,13 @@ extension AccountInfoQueryProperty
   serverTimezoneProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'serverTimezone');
+    });
+  }
+
+  QueryBuilder<AccountInfo, int?, QQueryOperations>
+  serverUtcOffsetMinutesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'serverUtcOffsetMinutes');
     });
   }
 

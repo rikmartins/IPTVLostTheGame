@@ -1,5 +1,6 @@
 import 'package:isar_community/isar.dart';
 
+import '../../../core/utils/search_text.dart';
 import 'media_category.dart';
 
 part 'live_channel.g.dart';
@@ -41,4 +42,14 @@ class LiveChannel {
   String? remoteId;
 
   int syncStamp = 0;
+
+  /// O nome em minúsculas e sem acentos, para a pesquisa global. Sem
+  /// índice: o Isar procura dentro do texto em ~30 ms em 186k filmes, e um
+  /// índice das palavras punha a sincronização 3x mais lenta e duplicava o
+  /// tamanho da base. Nullable só para se reconhecerem os itens gravados
+  /// antes de existir (ver `ensureSearchIndex`).
+  String? get searchName => _searchName ??= foldForSearch(name);
+
+  @ignore
+  String? _searchName;
 }

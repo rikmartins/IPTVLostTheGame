@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/session_controller.dart';
 import '../../core/utils/time_format.dart';
 import '../../data/local/models/tv_series.dart';
+import '../../data/local/models/watch_progress.dart';
 import '../../data/sources/series_episode.dart';
 import '../../data/sources/source_exception.dart';
 import '../catalog/widgets/artwork.dart';
 import '../player/play_vod.dart';
+import '../player/watch_progress.dart';
 import 'series_providers.dart';
 
 class SeriesDetailScreen extends ConsumerStatefulWidget {
@@ -28,6 +30,8 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
     // Cabeçalho vem do Isar (instantâneo); só os episódios vêm da rede.
     final series = ref.watch(seriesItemProvider(widget.seriesId));
     final episodes = ref.watch(seriesEpisodesProvider(widget.seriesId));
+    // O que se viu neste dispositivo (no Xtream é a única fonte).
+    final local = ref.watch(episodeProgressProvider(widget.seriesId));
 
     return Scaffold(
       appBar: AppBar(title: Text(series?.name ?? '')),
@@ -39,7 +43,7 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
           ...switch (episodes) {
             // Também a recarregar depois de ver um episódio: a lista fica
             // no ecrã até chegar a nova.
-            AsyncValue(:final value?) => _episodeSection(value),
+            AsyncValue(:final value?) => _episodeSection(value, local),
             AsyncError(:final error) => [
               _LoadError(
                 message: error is SourceException
@@ -61,7 +65,10 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
     );
   }
 
-  List<Widget> _episodeSection(List<SeriesEpisode> episodes) {
+  List<Widget> _episodeSection(
+    List<SeriesEpisode> episodes,
+    Map<String, WatchProgress> local,
+  ) {
     if (episodes.isEmpty) {
       return const [
         Padding(
@@ -92,7 +99,10 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
         ),
       const SizedBox(height: 8),
       for (final episode in inSeason)
-        _EpisodeTile(episode: episode, onTap: () => _play(episode)),
+        _EpisodeTile(
+          episode: _withLocalProgress(episode, local[episode.id]),
+          onTap: () => _play(episode),
+        ),
     ];
   }
 
@@ -102,6 +112,7 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
       context,
       ref,
       title: [?seriesName, 'T${episode.season}E${episode.number}'].join(' · '),
+      target: episodeTarget(widget.seriesId, episode),
       request: (client) => client.episode(episode),
     );
     // O servidor guardou onde ficou (ou marcou como visto).
@@ -109,6 +120,28 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
       ref.invalidate(seriesEpisodesProvider(widget.seriesId));
     }
   }
+}
+
+/// Junta o que se viu neste dispositivo ao que o servidor diz. No Xtream é
+/// a única fonte; no Jellyfin o servidor sabe também o que se viu noutros
+/// aparelhos, e prevalece.
+SeriesEpisode _withLocalProgress(SeriesEpisode episode, WatchProgress? local) {
+  if (local == null) return episode;
+  final watched = episode.watched || local.finished;
+  return SeriesEpisode(
+    id: episode.id,
+    season: episode.season,
+    number: episode.number,
+    title: episode.title,
+    containerExtension: episode.containerExtension,
+    plot: episode.plot,
+    image: episode.image,
+    duration: episode.duration,
+    resumeAt: watched
+        ? null
+        : episode.resumeAt ?? (local.resumable ? local.position : null),
+    watched: watched,
+  );
 }
 
 class _Header extends StatelessWidget {

@@ -31,6 +31,11 @@ class AccountInfo {
   /// Fuso do servidor (necessário para os URLs de catch-up).
   String? serverTimezone;
 
+  /// Diferença da hora do servidor para UTC, em minutos, medida no login
+  /// (`time_now` vs `timestamp_now`). Os URLs de catch-up levam a hora
+  /// local do servidor. null = desconhecida.
+  int? serverUtcOffsetMinutes;
+
   late DateTime lastLoginAt;
 }
 

@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:iptv_app/app/profiles_controller.dart';
 import 'package:iptv_app/app/session_controller.dart';
+import 'package:iptv_app/app/settings_controller.dart';
 import 'package:iptv_app/app/sync_controller.dart';
+import 'package:iptv_app/data/local/models/app_settings.dart';
 import 'package:iptv_app/data/local/models/epg_programme.dart';
 import 'package:iptv_app/data/local/models/live_channel.dart';
 import 'package:iptv_app/data/profiles/profile.dart';
@@ -14,6 +16,7 @@ import 'package:iptv_app/data/sources/source_client.dart';
 import 'package:iptv_app/data/sources/source_exception.dart';
 import 'package:iptv_app/features/catalog/category_providers.dart';
 import 'package:iptv_app/features/epg/epg_providers.dart';
+import 'package:iptv_app/features/live_tv/favorites.dart';
 import 'package:iptv_app/features/live_tv/live_tv_providers.dart';
 import 'package:iptv_app/features/live_tv/live_tv_screen.dart';
 import 'package:iptv_app/features/player/playback_session.dart';
@@ -102,10 +105,21 @@ class _FakeSource implements SourceClient {
   Future<PlaybackRequest?> episode(SeriesEpisode episode) async => null;
 
   @override
+  Future<PlaybackRequest?> catchup(
+    int channelId,
+    EpgProgramme programme,
+  ) async => null;
+
+  @override
   bool get tracksProgress => false;
 
   @override
   void close() {}
+}
+
+class _MemorySettings extends SettingsController {
+  @override
+  AppSettings build() => AppSettings();
 }
 
 class _IdleSync extends SyncController {
@@ -146,6 +160,8 @@ Future<_FakeSession> _pump(
         syncControllerProvider.overrideWith(_IdleSync.new),
         categoriesProvider.overrideWith((ref, type) => const []),
         hiddenCategoriesProvider.overrideWithBuild((ref, notifier) => {}),
+        favoriteChannelsProvider.overrideWithBuild((ref, notifier) => {}),
+        settingsProvider.overrideWith(_MemorySettings.new),
         liveChannelIdsProvider.overrideWith((ref, category) => [1, 2, 3]),
         liveChannelProvider.overrideWith(
           (ref, id) => LiveChannel()
@@ -235,17 +251,24 @@ void main() {
     expect(find.byKey(const Key('video')), findsNothing);
   });
 
-  testWidgets('tocar em vários canais seguidos só abre o último', (
+  testWidgets('um toque abre logo; toques seguidos esperam pelo último', (
     tester,
   ) async {
     final session = await _pump(tester, const Size(1600, 900));
 
     await tester.tap(find.text('Canal 1'));
+    await tester.pump();
+    expect(session.opened, ['http://iptv.test/live/u/p/1.ts']);
+
+    await tester.tap(find.text('Canal 2'));
     await tester.pump(const Duration(milliseconds: 100));
     await tester.tap(find.text('Canal 3'));
     await tester.pump(LiveTvScreen.previewDebounce);
 
-    expect(session.opened, ['http://iptv.test/live/u/p/3.ts']);
+    expect(session.opened, [
+      'http://iptv.test/live/u/p/1.ts',
+      'http://iptv.test/live/u/p/3.ts',
+    ]);
   });
 
   testWidgets('canal recusado pelo servidor mostra o motivo', (tester) async {

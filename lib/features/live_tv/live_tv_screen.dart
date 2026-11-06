@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/session_controller.dart';
+import '../../app/settings_controller.dart';
 import '../../app/sync_controller.dart';
 import '../../app/widgets/section_scaffold.dart';
 import '../../data/local/models/media_category.dart';
@@ -28,8 +29,9 @@ class LiveTvScreen extends ConsumerStatefulWidget {
   /// para cima da lista.
   static const sidePreviewBreakpoint = 600.0;
 
-  /// Espera antes de abrir o stream: passar por vários canais seguidos não
-  /// abre uma ligação por cada um (o Xtream costuma aceitar só uma).
+  /// Um toque depois de uma pausa abre logo o canal; toques mais seguidos
+  /// do que isto esperam pelo último, para não abrir uma ligação por cada
+  /// um (o Xtream costuma aceitar só uma).
   static const previewDebounce = Duration(milliseconds: 350);
 
   @override
@@ -40,6 +42,8 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
   PlaybackSession? _session;
   int? _selected;
   Timer? _openTimer;
+  DateTime? _lastTap;
+  bool _fullScreen = false;
   bool _visible = true;
 
   @override
@@ -47,10 +51,13 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     super.didChangeDependencies();
     // As secções ficam vivas num IndexedStack: ao ir para Filmes ou
     // Definições, a pré-visualização não pode continuar a tocar.
-    final visible = Visibility.of(context);
+    // E quando outro ecrã fica por cima (a pesquisa), menos o ecrã inteiro,
+    // que continua este stream.
+    final visible =
+        Visibility.of(context) && (ModalRoute.isCurrentOf(context) ?? true);
     if (visible == _visible) return;
     _visible = visible;
-    if (!visible) _closePreview();
+    if (!visible && !_fullScreen) _closePreview();
   }
 
   @override
@@ -74,7 +81,24 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
       _ensureSession();
     });
     _openTimer?.cancel();
-    _openTimer = Timer(LiveTvScreen.previewDebounce, () => _play(id));
+    final now = DateTime.now();
+    final last = _lastTap;
+    _lastTap = now;
+    if (last == null || now.difference(last) >= LiveTvScreen.previewDebounce) {
+      _play(id);
+    } else {
+      _openTimer = Timer(LiveTvScreen.previewDebounce, () => _play(id));
+    }
+  }
+
+  /// O perfil de buffer e a descodificação aplicam-se quando o player é
+  /// criado: mudá-los nas definições cria outro no próximo canal. (A
+  /// pré-visualização já está fechada: as definições são outra secção.)
+  void _discardSession() {
+    _openTimer?.cancel();
+    _session?.dispose();
+    _session = null;
+    if (mounted) setState(() => _selected = null);
   }
 
   Future<void> _play(int id) async {
@@ -94,6 +118,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
     _openTimer?.cancel();
     final session = _ensureSession();
     setState(() => _selected = ids[index]);
+    _fullScreen = true;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => PlayerScreen.live(
@@ -103,6 +128,7 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
         ),
       ),
     );
+    _fullScreen = false;
     if (!mounted) return;
     // No ecrã inteiro pode ter mudado de canal: a lista e a
     // pré-visualização ficam no canal que estava a ver.
@@ -129,6 +155,10 @@ class _LiveTvScreenState extends ConsumerState<LiveTvScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(
+      settingsProvider.select((s) => (s.bufferProfile, s.directDecoding)),
+      (_, _) => _discardSession(),
+    );
     return PopScope(
       // Com um canal em pré-visualização, "voltar" fecha-a primeiro.
       canPop: _selected == null,

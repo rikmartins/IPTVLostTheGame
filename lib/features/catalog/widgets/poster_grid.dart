@@ -46,6 +46,8 @@ class PosterTile extends StatelessWidget {
     required this.imageUrl,
     required this.rating,
     required this.onTap,
+    this.progress,
+    this.subtitle,
   });
 
   final String title;
@@ -54,6 +56,12 @@ class PosterTile extends StatelessWidget {
   /// 0–10; 0 = sem classificação.
   final double rating;
   final VoidCallback onTap;
+
+  /// 0–1: quanto já se viu (barra por baixo do poster).
+  final double? progress;
+
+  /// Linha por baixo do título (ex.: o episódio a continuar).
+  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +80,18 @@ class PosterTile extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   Poster(url: imageUrl, title: title),
+                  if (progress case final progress?)
+                    Positioned(
+                      left: 6,
+                      right: 6,
+                      bottom: 6,
+                      child: LinearProgressIndicator(
+                        value: progress.clamp(0.0, 1.0),
+                        minHeight: 4,
+                        borderRadius: BorderRadius.circular(2),
+                        backgroundColor: Colors.black54,
+                      ),
+                    ),
                   if (rating > 0)
                     Positioned(
                       top: 6,
@@ -104,7 +124,7 @@ class PosterTile extends StatelessWidget {
             SizedBox(
               height: 36,
               child: Text(
-                title,
+                subtitle == null ? title : '$title\n$subtitle',
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall,

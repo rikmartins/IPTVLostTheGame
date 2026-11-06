@@ -56,7 +56,8 @@ class PlayerScreen extends ConsumerStatefulWidget {
 }
 
 class _PlayerScreenState extends ConsumerState<PlayerScreen> {
-  /// Espera depois da última tecla de zapping antes de abrir o stream. Com
+  /// Uma tecla de zapping depois de uma pausa abre logo o canal; teclas
+  /// mais seguidas do que isto esperam pela última. Com
   /// `max_connections = 1` (o normal no Xtream), abrir um stream por tecla
   /// esgota a ligação no painel e o canal final recusa.
   static const _zapDebounce = Duration(milliseconds: 400);
@@ -72,6 +73,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   String? _error;
   Timer? _osdTimer;
   Timer? _zapTimer;
+  DateTime? _lastZap;
 
   @override
   void initState() {
@@ -144,7 +146,14 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     setState(() => _index = (_index + delta) % ids.length);
     _showOsd();
     _zapTimer?.cancel();
-    _zapTimer = Timer(_zapDebounce, _open);
+    final now = DateTime.now();
+    final last = _lastZap;
+    _lastZap = now;
+    if (last == null || now.difference(last) >= _zapDebounce) {
+      _open();
+    } else {
+      _zapTimer = Timer(_zapDebounce, _open);
+    }
   }
 
   void _showOsd() {

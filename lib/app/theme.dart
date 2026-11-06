@@ -61,6 +61,13 @@ ThemeData _buildTheme(Brightness brightness) {
     hoverColor: scheme.onSurface.withValues(alpha: 0.05),
     // Sem ondas de toque: mais limpo e menos trabalho de pintura.
     splashFactory: NoSplash.splashFactory,
+    // Ecrãs novos (player, série, pesquisa) aparecem logo, sem animação.
+    pageTransitionsTheme: PageTransitionsTheme(
+      builders: {
+        for (final platform in TargetPlatform.values)
+          platform: const _InstantPageTransitionsBuilder(),
+      },
+    ),
     dividerTheme: DividerThemeData(
       color: scheme.outlineVariant.withValues(alpha: light ? 0.6 : 0.35),
       space: 1,
@@ -74,4 +81,23 @@ ThemeData _buildTheme(Brightness brightness) {
       ),
     ),
   );
+}
+
+class _InstantPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _InstantPageTransitionsBuilder();
+
+  @override
+  Duration get transitionDuration => Duration.zero;
+
+  @override
+  Duration get reverseTransitionDuration => Duration.zero;
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => child;
 }

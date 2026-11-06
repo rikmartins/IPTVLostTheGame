@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/time_format.dart';
 import '../../catalog/widgets/artwork.dart';
 import '../../epg/epg_providers.dart';
+import '../favorites.dart';
 import '../live_tv_providers.dart';
 
 class ChannelTile extends ConsumerWidget {
@@ -28,6 +29,9 @@ class ChannelTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final channel = ref.watch(liveChannelProvider(id));
     if (channel == null) return const SizedBox.shrink();
+    final favorite = ref.watch(
+      favoriteChannelsProvider.select((ids) => ids.contains(id)),
+    );
 
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
@@ -44,6 +48,9 @@ class ChannelTile extends ConsumerWidget {
           : Colors.transparent,
       child: InkWell(
         onTap: onTap,
+        // Clique longo (ou botão direito no computador): favorito.
+        onLongPress: () => toggleFavorite(context, ref, channel),
+        onSecondaryTap: () => toggleFavorite(context, ref, channel),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
@@ -95,6 +102,18 @@ class ChannelTile extends ConsumerWidget {
                   ],
                 ),
               ),
+              if (favorite)
+                Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Tooltip(
+                    message: 'Favorito',
+                    child: Icon(
+                      Icons.star_rounded,
+                      size: 18,
+                      color: theme.colorScheme.tertiary,
+                    ),
+                  ),
+                ),
               if (channel.hasCatchup)
                 Padding(
                   padding: const EdgeInsets.only(left: 12),

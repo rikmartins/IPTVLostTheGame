@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../features/search/search_screen.dart';
 import 'brand.dart';
 import 'profile_switcher.dart';
 import 'sync_indicator.dart';
@@ -27,13 +28,22 @@ class SectionScaffold extends StatelessWidget {
                     const BrandIcon(size: 30),
                     const SizedBox(width: 12),
                   ],
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
+                  // Num telemóvel estreito o título encolhe, os botões não.
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
-                  const Spacer(),
+                  IconButton(
+                    tooltip: 'Pesquisar canais, filmes e séries',
+                    icon: const Icon(Icons.search),
+                    onPressed: () => openSearch(context),
+                  ),
+                  const SizedBox(width: 4),
                   const ProfileSwitcher(),
                   const SizedBox(width: 8),
                   const SyncIndicator(),

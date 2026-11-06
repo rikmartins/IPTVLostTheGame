@@ -15,13 +15,16 @@ class SettingsController extends Notifier<AppSettings> {
 
   void setVpnWholeDevice(bool value) => _save((s) => s.vpnWholeDevice = value);
 
+  void setDirectDecoding(bool value) => _save((s) => s.directDecoding = value);
+
   /// Copia o estado atual antes de mudar um campo: um `AppSettings()` novo
   /// repunha os outros campos nos valores por omissão.
   void _save(void Function(AppSettings settings) change) {
     final updated = AppSettings()
       ..bufferProfile = state.bufferProfile
       ..theme = state.theme
-      ..vpnWholeDevice = state.vpnWholeDevice;
+      ..vpnWholeDevice = state.vpnWholeDevice
+      ..directDecoding = state.directDecoding;
     change(updated);
 
     final isar = ref.read(mainIsarProvider);

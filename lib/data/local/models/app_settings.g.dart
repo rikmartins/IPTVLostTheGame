@@ -23,14 +23,19 @@ const AppSettingsSchema = CollectionSchema(
       type: IsarType.byte,
       enumMap: _AppSettingsbufferProfileEnumValueMap,
     ),
-    r'theme': PropertySchema(
+    r'directDecoding': PropertySchema(
       id: 1,
+      name: r'directDecoding',
+      type: IsarType.bool,
+    ),
+    r'theme': PropertySchema(
+      id: 2,
       name: r'theme',
       type: IsarType.byte,
       enumMap: _AppSettingsthemeEnumValueMap,
     ),
     r'vpnWholeDevice': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'vpnWholeDevice',
       type: IsarType.bool,
     ),
@@ -67,8 +72,9 @@ void _appSettingsSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeByte(offsets[0], object.bufferProfile.index);
-  writer.writeByte(offsets[1], object.theme.index);
-  writer.writeBool(offsets[2], object.vpnWholeDevice);
+  writer.writeBool(offsets[1], object.directDecoding);
+  writer.writeByte(offsets[2], object.theme.index);
+  writer.writeBool(offsets[3], object.vpnWholeDevice);
 }
 
 AppSettings _appSettingsDeserialize(
@@ -83,11 +89,12 @@ AppSettings _appSettingsDeserialize(
         offsets[0],
       )] ??
       BufferProfile.fast;
+  object.directDecoding = reader.readBool(offsets[1]);
   object.id = id;
   object.theme =
-      _AppSettingsthemeValueEnumMap[reader.readByteOrNull(offsets[1])] ??
+      _AppSettingsthemeValueEnumMap[reader.readByteOrNull(offsets[2])] ??
       ThemePreference.light;
-  object.vpnWholeDevice = reader.readBool(offsets[2]);
+  object.vpnWholeDevice = reader.readBool(offsets[3]);
   return object;
 }
 
@@ -105,10 +112,12 @@ P _appSettingsDeserializeProp<P>(
               BufferProfile.fast)
           as P;
     case 1:
+      return (reader.readBool(offset)) as P;
+    case 2:
       return (_AppSettingsthemeValueEnumMap[reader.readByteOrNull(offset)] ??
               ThemePreference.light)
           as P;
-    case 2:
+    case 3:
       return (reader.readBool(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -287,6 +296,15 @@ extension AppSettingsQueryFilter
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+  directDecodingEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'directDecoding', value: value),
+      );
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition> idEqualTo(
     Id value,
   ) {
@@ -434,6 +452,19 @@ extension AppSettingsQuerySortBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByDirectDecoding() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'directDecoding', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+  sortByDirectDecodingDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'directDecoding', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByTheme() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'theme', Sort.asc);
@@ -472,6 +503,19 @@ extension AppSettingsQuerySortThenBy
   thenByBufferProfileDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'bufferProfile', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByDirectDecoding() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'directDecoding', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+  thenByDirectDecodingDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'directDecoding', Sort.desc);
     });
   }
 
@@ -521,6 +565,12 @@ extension AppSettingsQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByDirectDecoding() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'directDecoding');
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByTheme() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'theme');
@@ -546,6 +596,12 @@ extension AppSettingsQueryProperty
   bufferProfileProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'bufferProfile');
+    });
+  }
+
+  QueryBuilder<AppSettings, bool, QQueryOperations> directDecodingProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'directDecoding');
     });
   }
 

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../features/epg/guide_screen.dart';
 import '../features/live_tv/live_tv_screen.dart';
 import '../features/series/series_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/vod/movies_screen.dart';
 import 'widgets/brand.dart';
 
-/// Navegação principal: TV, Filmes, Séries e Definições.
+/// Navegação principal: TV, Guia, Filmes, Séries e Definições.
 ///
 /// Barra lateral em ecrãs largos (TV, desktop) e barra inferior no
 /// telemóvel. Cada secção é construída só na primeira visita e depois fica
@@ -22,6 +23,11 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   static const _sections = [
     (icon: Icons.live_tv_outlined, selected: Icons.live_tv, label: 'TV'),
+    (
+      icon: Icons.view_timeline_outlined,
+      selected: Icons.view_timeline,
+      label: 'Guia',
+    ),
     (icon: Icons.movie_outlined, selected: Icons.movie, label: 'Filmes'),
     (
       icon: Icons.video_library_outlined,
@@ -45,8 +51,9 @@ class _HomeShellState extends State<HomeShell> {
 
   Widget _buildSection(int index) => switch (index) {
     0 => const LiveTvScreen(),
-    1 => const MoviesScreen(),
-    2 => const SeriesScreen(),
+    1 => const GuideScreen(),
+    2 => const MoviesScreen(),
+    3 => const SeriesScreen(),
     _ => const SettingsScreen(),
   };
 

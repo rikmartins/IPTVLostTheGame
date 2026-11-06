@@ -8,15 +8,18 @@ import '../../data/local/models/sync_state.dart';
 import '../../data/local/models/tv_series.dart';
 import '../../data/sources/series_episode.dart';
 import '../catalog/category_providers.dart';
+import '../player/watch_progress.dart';
 
-/// Sem grupo (`null`): todas menos as dos grupos ocultos, das atualizadas
-/// mais recentemente (novos episódios) para as mais antigas.
+/// Sem grupo (`null`): as [kRecentLimit] atualizadas mais recentemente
+/// (novos episódios), menos as dos grupos ocultos. [kContinueGroup]: as que
+/// têm um episódio a meio.
 final seriesIdsProvider = Provider.autoDispose.family<List<int>, int?>((
   ref,
   categoryId,
 ) {
   ref.watch(catalogVersionProvider(SyncKind.series));
   final series = ref.watch(isarProvider).series;
+  if (categoryId == kContinueGroup) return ref.watch(continueSeriesIdsProvider);
   if (categoryId != null) {
     return series
         .where()
@@ -27,7 +30,12 @@ final seriesIdsProvider = Provider.autoDispose.family<List<int>, int?>((
 
   final hidden = ref.watch(hiddenCategoriesProvider(CategoryType.series));
   if (hidden.isEmpty) {
-    return series.where().sortByLastModifiedDesc().idProperty().findAllSync();
+    return series
+        .where()
+        .sortByLastModifiedDesc()
+        .limit(kRecentLimit)
+        .idProperty()
+        .findAllSync();
   }
   return series
       .where()
@@ -35,6 +43,7 @@ final seriesIdsProvider = Provider.autoDispose.family<List<int>, int?>((
       .not()
       .anyOf(hidden, (q, id) => q.categoryIdEqualTo(id))
       .sortByLastModifiedDesc()
+      .limit(kRecentLimit)
       .idProperty()
       .findAllSync();
 });

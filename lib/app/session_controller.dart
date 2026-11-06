@@ -4,6 +4,7 @@ import '../data/remote/jellyfin/jellyfin_source_client.dart';
 import '../data/remote/xtream/xtream_source_client.dart';
 import '../data/sources/credentials.dart';
 import '../data/sources/source_client.dart';
+import '../data/sync/search_index.dart';
 import 'profiles_controller.dart';
 import 'providers.dart';
 import 'sync_controller.dart';
@@ -22,9 +23,14 @@ class SessionController extends Notifier<SourceCredentials?> {
     final profile = ref.read(profilesProvider).active;
     if (profile != null) {
       // Depois do build: o isarProvider já aponta para este perfil.
-      Future.microtask(
-        () => ref.read(syncControllerProvider.notifier).syncIfStale(profile),
-      );
+      Future.microtask(() {
+        ref.read(syncControllerProvider.notifier).syncIfStale(profile);
+        // Catálogos de versões anteriores à pesquisa (uma vez só).
+        ensureSearchIndex(
+          ref.read(appDatabaseProvider).directory,
+          profile.databaseName,
+        ).ignore();
+      });
     }
     return profile?.credentials;
   }

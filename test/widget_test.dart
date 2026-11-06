@@ -150,11 +150,23 @@ void main() {
     expect(find.text('Erro inesperado ao iniciar sessão'), findsOneWidget);
   });
 
-  testWidgets('tema claro por omissão', (tester) async {
+  testWidgets('tema escuro por omissão nas instalações novas', (tester) async {
     await _pumpApp(tester);
 
     final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
-    expect(app.themeMode, ThemeMode.light);
+    expect(app.themeMode, ThemeMode.dark);
+    expect(
+      Theme.of(tester.element(find.byType(Scaffold))).brightness,
+      Brightness.dark,
+    );
+  });
+
+  testWidgets('tema claro quando escolhido nas definições', (tester) async {
+    await _pumpApp(
+      tester,
+      settings: AppSettings()..theme = ThemePreference.light,
+    );
+
     expect(
       Theme.of(tester.element(find.byType(Scaffold))).brightness,
       Brightness.light,

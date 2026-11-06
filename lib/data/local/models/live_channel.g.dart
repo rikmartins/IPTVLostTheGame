@@ -51,13 +51,18 @@ const LiveChannelSchema = CollectionSchema(
       name: r'remoteId',
       type: IsarType.string,
     ),
-    r'sortIndex': PropertySchema(
+    r'searchName': PropertySchema(
       id: 10,
+      name: r'searchName',
+      type: IsarType.string,
+    ),
+    r'sortIndex': PropertySchema(
+      id: 11,
       name: r'sortIndex',
       type: IsarType.long,
     ),
     r'syncStamp': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'syncStamp',
       type: IsarType.long,
     ),
@@ -128,6 +133,12 @@ int _liveChannelEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  {
+    final value = object.searchName;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -147,8 +158,9 @@ void _liveChannelSerialize(
   writer.writeString(offsets[7], object.name);
   writer.writeLong(offsets[8], object.number);
   writer.writeString(offsets[9], object.remoteId);
-  writer.writeLong(offsets[10], object.sortIndex);
-  writer.writeLong(offsets[11], object.syncStamp);
+  writer.writeString(offsets[10], object.searchName);
+  writer.writeLong(offsets[11], object.sortIndex);
+  writer.writeLong(offsets[12], object.syncStamp);
 }
 
 LiveChannel _liveChannelDeserialize(
@@ -169,8 +181,8 @@ LiveChannel _liveChannelDeserialize(
   object.name = reader.readString(offsets[7]);
   object.number = reader.readLong(offsets[8]);
   object.remoteId = reader.readStringOrNull(offsets[9]);
-  object.sortIndex = reader.readLong(offsets[10]);
-  object.syncStamp = reader.readLong(offsets[11]);
+  object.sortIndex = reader.readLong(offsets[11]);
+  object.syncStamp = reader.readLong(offsets[12]);
   return object;
 }
 
@@ -202,8 +214,10 @@ P _liveChannelDeserializeProp<P>(
     case 9:
       return (reader.readStringOrNull(offset)) as P;
     case 10:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 11:
+      return (reader.readLong(offset)) as P;
+    case 12:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1617,6 +1631,165 @@ extension LiveChannelQueryFilter
   }
 
   QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  searchNameIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'searchName'),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  searchNameIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'searchName'),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  searchNameEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  searchNameGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  searchNameLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  searchNameBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'searchName',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  searchNameStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  searchNameEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  searchNameContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  searchNameMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'searchName',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  searchNameIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'searchName', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
+  searchNameIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'searchName', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterFilterCondition>
   sortIndexEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -1857,6 +2030,18 @@ extension LiveChannelQuerySortBy
     });
   }
 
+  QueryBuilder<LiveChannel, LiveChannel, QAfterSortBy> sortBySearchName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'searchName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterSortBy> sortBySearchNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'searchName', Sort.desc);
+    });
+  }
+
   QueryBuilder<LiveChannel, LiveChannel, QAfterSortBy> sortBySortIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sortIndex', Sort.asc);
@@ -2018,6 +2203,18 @@ extension LiveChannelQuerySortThenBy
     });
   }
 
+  QueryBuilder<LiveChannel, LiveChannel, QAfterSortBy> thenBySearchName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'searchName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LiveChannel, LiveChannel, QAfterSortBy> thenBySearchNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'searchName', Sort.desc);
+    });
+  }
+
   QueryBuilder<LiveChannel, LiveChannel, QAfterSortBy> thenBySortIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sortIndex', Sort.asc);
@@ -2115,6 +2312,14 @@ extension LiveChannelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<LiveChannel, LiveChannel, QDistinct> distinctBySearchName({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'searchName', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<LiveChannel, LiveChannel, QDistinct> distinctBySortIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'sortIndex');
@@ -2193,6 +2398,12 @@ extension LiveChannelQueryProperty
   QueryBuilder<LiveChannel, String?, QQueryOperations> remoteIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'remoteId');
+    });
+  }
+
+  QueryBuilder<LiveChannel, String?, QQueryOperations> searchNameProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'searchName');
     });
   }
 

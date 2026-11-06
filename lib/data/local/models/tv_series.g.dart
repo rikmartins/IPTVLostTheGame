@@ -42,13 +42,18 @@ const TvSeriesSchema = CollectionSchema(
       name: r'remoteId',
       type: IsarType.string,
     ),
-    r'sortIndex': PropertySchema(
+    r'searchName': PropertySchema(
       id: 9,
+      name: r'searchName',
+      type: IsarType.string,
+    ),
+    r'sortIndex': PropertySchema(
+      id: 10,
       name: r'sortIndex',
       type: IsarType.long,
     ),
     r'syncStamp': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'syncStamp',
       type: IsarType.long,
     ),
@@ -125,6 +130,12 @@ int _tvSeriesEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  {
+    final value = object.searchName;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -143,8 +154,9 @@ void _tvSeriesSerialize(
   writer.writeDouble(offsets[6], object.rating);
   writer.writeString(offsets[7], object.releaseDate);
   writer.writeString(offsets[8], object.remoteId);
-  writer.writeLong(offsets[9], object.sortIndex);
-  writer.writeLong(offsets[10], object.syncStamp);
+  writer.writeString(offsets[9], object.searchName);
+  writer.writeLong(offsets[10], object.sortIndex);
+  writer.writeLong(offsets[11], object.syncStamp);
 }
 
 TvSeries _tvSeriesDeserialize(
@@ -164,8 +176,8 @@ TvSeries _tvSeriesDeserialize(
   object.rating = reader.readDouble(offsets[6]);
   object.releaseDate = reader.readStringOrNull(offsets[7]);
   object.remoteId = reader.readStringOrNull(offsets[8]);
-  object.sortIndex = reader.readLong(offsets[9]);
-  object.syncStamp = reader.readLong(offsets[10]);
+  object.sortIndex = reader.readLong(offsets[10]);
+  object.syncStamp = reader.readLong(offsets[11]);
   return object;
 }
 
@@ -195,8 +207,10 @@ P _tvSeriesDeserializeProp<P>(
     case 8:
       return (reader.readStringOrNull(offset)) as P;
     case 9:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 10:
+      return (reader.readLong(offset)) as P;
+    case 11:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1724,6 +1738,170 @@ extension TvSeriesQueryFilter
     });
   }
 
+  QueryBuilder<TvSeries, TvSeries, QAfterFilterCondition> searchNameIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'searchName'),
+      );
+    });
+  }
+
+  QueryBuilder<TvSeries, TvSeries, QAfterFilterCondition>
+  searchNameIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'searchName'),
+      );
+    });
+  }
+
+  QueryBuilder<TvSeries, TvSeries, QAfterFilterCondition> searchNameEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TvSeries, TvSeries, QAfterFilterCondition> searchNameGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TvSeries, TvSeries, QAfterFilterCondition> searchNameLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TvSeries, TvSeries, QAfterFilterCondition> searchNameBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'searchName',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TvSeries, TvSeries, QAfterFilterCondition> searchNameStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TvSeries, TvSeries, QAfterFilterCondition> searchNameEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TvSeries, TvSeries, QAfterFilterCondition> searchNameContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TvSeries, TvSeries, QAfterFilterCondition> searchNameMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'searchName',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TvSeries, TvSeries, QAfterFilterCondition> searchNameIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'searchName', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<TvSeries, TvSeries, QAfterFilterCondition>
+  searchNameIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'searchName', value: ''),
+      );
+    });
+  }
+
   QueryBuilder<TvSeries, TvSeries, QAfterFilterCondition> sortIndexEqualTo(
     int value,
   ) {
@@ -1958,6 +2136,18 @@ extension TvSeriesQuerySortBy on QueryBuilder<TvSeries, TvSeries, QSortBy> {
     });
   }
 
+  QueryBuilder<TvSeries, TvSeries, QAfterSortBy> sortBySearchName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'searchName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TvSeries, TvSeries, QAfterSortBy> sortBySearchNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'searchName', Sort.desc);
+    });
+  }
+
   QueryBuilder<TvSeries, TvSeries, QAfterSortBy> sortBySortIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sortIndex', Sort.asc);
@@ -2105,6 +2295,18 @@ extension TvSeriesQuerySortThenBy
     });
   }
 
+  QueryBuilder<TvSeries, TvSeries, QAfterSortBy> thenBySearchName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'searchName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TvSeries, TvSeries, QAfterSortBy> thenBySearchNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'searchName', Sort.desc);
+    });
+  }
+
   QueryBuilder<TvSeries, TvSeries, QAfterSortBy> thenBySortIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sortIndex', Sort.asc);
@@ -2198,6 +2400,14 @@ extension TvSeriesQueryWhereDistinct
     });
   }
 
+  QueryBuilder<TvSeries, TvSeries, QDistinct> distinctBySearchName({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'searchName', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<TvSeries, TvSeries, QDistinct> distinctBySortIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'sortIndex');
@@ -2270,6 +2480,12 @@ extension TvSeriesQueryProperty
   QueryBuilder<TvSeries, String?, QQueryOperations> remoteIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'remoteId');
+    });
+  }
+
+  QueryBuilder<TvSeries, String?, QQueryOperations> searchNameProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'searchName');
     });
   }
 

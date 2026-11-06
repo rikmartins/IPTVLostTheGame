@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -58,8 +59,11 @@ typedef PlaybackSessionFactory = PlaybackSession Function({required bool live});
 /// Sobreposto nos testes (o libmpv não existe no `flutter test`).
 final playbackSessionFactoryProvider = Provider<PlaybackSessionFactory>((ref) {
   return ({required bool live}) {
-    final profile = ref.read(settingsProvider).bufferProfile;
-    return MpvPlaybackSession(profile.mpvProperties(live: live));
+    final settings = ref.read(settingsProvider);
+    return MpvPlaybackSession(
+      settings.bufferProfile.mpvProperties(live: live),
+      directDecoding: settings.directDecoding && Platform.isAndroid,
+    );
   };
 });
 
@@ -116,9 +120,24 @@ bool isHarmlessPlayerError(String message) {
 }
 
 class MpvPlaybackSession implements PlaybackSession {
-  MpvPlaybackSession(Map<String, String> mpvProperties) {
+  /// [directDecoding]: no Android, o MediaCodec desenha diretamente na
+  /// superfície do vídeo (sem copiar cada imagem de volta para a memória).
+  /// Por omissão o media_kit usa `hwdec=auto-safe` com `vo=gpu`, que também
+  /// descodifica na placa mas copia as imagens.
+  MpvPlaybackSession(
+    Map<String, String> mpvProperties, {
+    bool directDecoding = false,
+  }) {
     // Antes do primeiro open, para a saída de vídeo já estar ligada.
-    _controller = VideoController(_player);
+    _controller = VideoController(
+      _player,
+      configuration: directDecoding
+          ? const VideoControllerConfiguration(
+              vo: 'mediacodec_embed',
+              hwdec: 'mediacodec',
+            )
+          : const VideoControllerConfiguration(),
+    );
     _configured = _applyProperties(mpvProperties);
     _errors = _player.stream.error.listen(_onPlayerError);
     _positions = _player.stream.position.listen(_onPosition);
@@ -251,7 +270,12 @@ class MpvPlaybackSession implements PlaybackSession {
     _reporter = reporter;
     reporter.started(start);
     _reportTimer = Timer.periodic(_reportInterval, (_) {
-      reporter.progress(_player.state.position, paused: !_player.state.playing);
+      final state = _player.state;
+      reporter.progress(
+        state.position,
+        paused: !state.playing,
+        duration: state.duration,
+      );
     });
   }
 
@@ -266,6 +290,7 @@ class MpvPlaybackSession implements PlaybackSession {
       state.completed && state.duration > Duration.zero
           ? state.duration
           : state.position,
+      duration: state.duration,
     );
   }
 

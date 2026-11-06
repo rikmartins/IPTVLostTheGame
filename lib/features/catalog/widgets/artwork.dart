@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/images/cached_network_image.dart';
+
 // Imagens do catálogo (logos de canais e posters de VOD).
 //
 // Em todas se usa `cacheWidth`: o Flutter descodifica a imagem já no
@@ -28,9 +30,12 @@ class ChannelLogo extends StatelessWidget {
 
     return SizedBox.square(
       dimension: size,
-      child: Image.network(
-        url,
-        cacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).round(),
+      child: Image(
+        image: ResizeImage.resizeIfNeeded(
+          (size * MediaQuery.devicePixelRatioOf(context)).round(),
+          null,
+          CachedNetworkImage(url),
+        ),
         fit: BoxFit.contain,
         filterQuality: FilterQuality.medium,
         gaplessPlayback: true,
@@ -64,12 +69,14 @@ class Poster extends StatelessWidget {
 
         return ClipRRect(
           borderRadius: BorderRadius.circular(10),
-          child: Image.network(
-            url,
+          child: Image(
+            image: ResizeImage.resizeIfNeeded(
+              (width * MediaQuery.devicePixelRatioOf(context)).round(),
+              null,
+              CachedNetworkImage(url),
+            ),
             width: width,
             height: height,
-            cacheWidth: (width * MediaQuery.devicePixelRatioOf(context))
-                .round(),
             fit: BoxFit.cover,
             filterQuality: FilterQuality.medium,
             gaplessPlayback: true,

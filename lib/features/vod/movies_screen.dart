@@ -8,6 +8,7 @@ import '../catalog/category_providers.dart';
 import '../catalog/widgets/category_list.dart';
 import '../catalog/widgets/poster_grid.dart';
 import '../player/play_vod.dart';
+import '../player/watch_progress.dart';
 import 'vod_providers.dart';
 
 class MoviesScreen extends StatelessWidget {
@@ -47,30 +48,42 @@ class _MovieGrid extends ConsumerWidget {
     return PosterGrid(
       storageKey: 'movies-$categoryId',
       ids: ids,
-      itemBuilder: (context, id) => _MovieTile(id: id),
+      itemBuilder: (context, id) => _MovieTile(
+        id: id,
+        // No "Continuar a ver" retoma logo, sem perguntar.
+        resumeNow: categoryId == kContinueGroup,
+      ),
     );
   }
 }
 
 class _MovieTile extends ConsumerWidget {
-  const _MovieTile({required this.id});
+  const _MovieTile({required this.id, this.resumeNow = false});
 
   final int id;
+  final bool resumeNow;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final movie = ref.watch(movieProvider(id));
     if (movie == null) return const SizedBox.shrink();
+    final progress = ref.watch(movieProgressProvider(id));
 
     return PosterTile(
       title: movie.name,
       imageUrl: movie.poster,
       rating: movie.rating,
+      progress:
+          progress != null && progress.resumable && progress.durationMs > 0
+          ? progress.positionMs / progress.durationMs
+          : null,
       onTap: () => playVod(
         context,
         ref,
         title: movie.name,
+        target: movieTarget(movie),
         request: (client) => client.movie(movie.id),
+        resumeNow: resumeNow,
       ),
     );
   }

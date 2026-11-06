@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -89,6 +91,20 @@ class SettingsScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+              if (Platform.isAndroid)
+                SwitchListTile(
+                  value: settings.directDecoding,
+                  onChanged: (value) => ref
+                      .read(settingsProvider.notifier)
+                      .setDirectDecoding(value),
+                  title: const Text('Descodificação direta no ecrã'),
+                  subtitle: const Text(
+                    'O vídeo vai da placa gráfica diretamente para o ecrã, '
+                    'sem cópias: menos CPU e bateria, bom em TV boxes '
+                    'fracas. As legendas dos filmes não aparecem neste modo. '
+                    'Se o vídeo ficar preto, desliga.',
+                  ),
+                ),
               const SettingsSectionTitle('VPN'),
               const VpnSection(),
               const SettingsSectionTitle('Lista'),

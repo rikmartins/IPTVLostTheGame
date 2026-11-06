@@ -61,7 +61,7 @@ class _CategorySidebar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final categories = ref.watch(visibleCategoriesProvider(type));
+    final entries = _groupEntries(ref, type, allLabel);
     final selected = ref.watch(selectedCategoryProvider(type));
     final hidden = ref.watch(hiddenCategoriesProvider(type)).length;
     final theme = Theme.of(context);
@@ -88,13 +88,13 @@ class _CategorySidebar extends ConsumerWidget {
             ],
           ),
         ),
-        Expanded(child: _sidebarList(categories, selected, scheme, ref)),
+        Expanded(child: _sidebarList(entries, selected, scheme, ref)),
       ],
     );
   }
 
   Widget _sidebarList(
-    List<MediaCategory> categories,
+    List<_GroupEntry> entries,
     int? selected,
     ColorScheme scheme,
     WidgetRef ref,
@@ -103,10 +103,10 @@ class _CategorySidebar extends ConsumerWidget {
       // Cada secção guarda a sua posição de scroll.
       key: PageStorageKey('categories-${type.name}'),
       padding: const EdgeInsets.only(bottom: 8),
-      itemCount: categories.length + 1,
+      itemCount: entries.length,
       itemBuilder: (context, index) {
-        final category = index == 0 ? null : categories[index - 1];
-        final categoryId = category?.categoryId;
+        final entry = entries[index];
+        final categoryId = entry.id;
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
@@ -121,8 +121,10 @@ class _CategorySidebar extends ConsumerWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
+            leading: entry.icon == null ? null : Icon(entry.icon, size: 20),
+            minLeadingWidth: 20,
             title: Text(
-              category?.name ?? allLabel,
+              entry.label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -144,7 +146,7 @@ class _CategoryChips extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final categories = ref.watch(visibleCategoriesProvider(type));
+    final entries = _groupEntries(ref, type, allLabel);
     final selected = ref.watch(selectedCategoryProvider(type));
 
     return SizedBox(
@@ -160,14 +162,17 @@ class _CategoryChips extends ConsumerWidget {
               key: PageStorageKey('chips-${type.name}'),
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.fromLTRB(4, 8, 16, 8),
-              itemCount: categories.length + 1,
+              itemCount: entries.length,
               separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
-                final category = index == 0 ? null : categories[index - 1];
-                final categoryId = category?.categoryId;
+                final entry = entries[index];
+                final categoryId = entry.id;
 
                 return ChoiceChip(
-                  label: Text(category?.name ?? allLabel),
+                  avatar: entry.icon == null
+                      ? null
+                      : Icon(entry.icon, size: 18),
+                  label: Text(entry.label),
                   selected: selected == categoryId,
                   showCheckmark: false,
                   onSelected: (_) => ref
@@ -181,6 +186,28 @@ class _CategoryChips extends ConsumerWidget {
       ),
     );
   }
+}
+
+typedef _GroupEntry = ({int? id, String label, IconData? icon});
+
+/// "Todos", os grupos da app (favoritos, continuar a ver) e os do
+/// fornecedor que não estão ocultos.
+List<_GroupEntry> _groupEntries(
+  WidgetRef ref,
+  CategoryType type,
+  String allLabel,
+) {
+  return [
+    (id: null, label: allLabel, icon: null),
+    for (final group in ref.watch(specialGroupsProvider(type)))
+      (
+        id: group.id,
+        label: group.label,
+        icon: group.id == kFavoritesGroup ? Icons.star_rounded : Icons.history,
+      ),
+    for (final category in ref.watch(visibleCategoriesProvider(type)))
+      (id: category.categoryId, label: category.name, icon: null),
+  ];
 }
 
 /// Abre a escolha dos grupos visíveis.

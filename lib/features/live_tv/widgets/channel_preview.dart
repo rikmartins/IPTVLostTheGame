@@ -7,6 +7,7 @@ import '../../../data/local/models/live_channel.dart';
 import '../../catalog/widgets/artwork.dart';
 import '../../epg/epg_providers.dart';
 import '../../player/playback_session.dart';
+import '../favorites.dart';
 import '../live_tv_providers.dart';
 
 /// Pré-visualização do canal escolhido na lista: vídeo pequeno e guia.
@@ -78,6 +79,7 @@ class ChannelPreview extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(child: _NowNextSummary(channel: channel)),
+                _FavoriteButton(channel: channel),
                 IconButton(
                   tooltip: 'Ecrã inteiro',
                   icon: const Icon(Icons.fullscreen),
@@ -128,6 +130,7 @@ class ChannelPreview extends ConsumerWidget {
                   ),
                 ),
               ),
+              _FavoriteButton(channel: channel),
               IconButton(
                 tooltip: 'Fechar pré-visualização',
                 icon: const Icon(Icons.close),
@@ -149,6 +152,26 @@ class ChannelPreview extends ConsumerWidget {
         const Divider(height: 1),
         Expanded(child: _Schedule(channel: channel)),
       ],
+    );
+  }
+}
+
+/// No comando da TV não há clique longo: a estrela fica aqui à mão.
+class _FavoriteButton extends ConsumerWidget {
+  const _FavoriteButton({required this.channel});
+
+  final LiveChannel channel;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favorite = ref.watch(
+      favoriteChannelsProvider.select((ids) => ids.contains(channel.id)),
+    );
+    return IconButton(
+      tooltip: favorite ? 'Tirar dos favoritos' : 'Juntar aos favoritos',
+      icon: Icon(favorite ? Icons.star_rounded : Icons.star_outline_rounded),
+      color: favorite ? Theme.of(context).colorScheme.tertiary : null,
+      onPressed: () => toggleFavorite(context, ref, channel),
     );
   }
 }

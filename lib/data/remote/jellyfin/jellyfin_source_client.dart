@@ -1,5 +1,6 @@
 import 'package:isar_community/isar.dart';
 
+import '../../local/models/epg_programme.dart';
 import '../../local/models/live_channel.dart';
 import '../../local/models/tv_series.dart';
 import '../../local/models/vod_movie.dart';
@@ -63,6 +64,13 @@ class JellyfinSourceClient implements SourceClient {
     );
   }
 
+  /// O Jellyfin não tem catch-up dos canais (só gravações do DVR).
+  @override
+  Future<PlaybackRequest?> catchup(
+    int channelId,
+    EpgProgramme programme,
+  ) async => null;
+
   @override
   bool get tracksProgress => true;
 
@@ -84,12 +92,16 @@ class _JellyfinReporter implements PlaybackReporter {
       _send(PlaybackEvent.started, position, paused: false);
 
   @override
-  void progress(Duration position, {required bool paused}) {
+  void progress(
+    Duration position, {
+    required bool paused,
+    Duration duration = Duration.zero,
+  }) {
     if (!_stopped) _send(PlaybackEvent.progress, position, paused: paused);
   }
 
   @override
-  void stopped(Duration position) {
+  void stopped(Duration position, {Duration duration = Duration.zero}) {
     if (_stopped) return;
     _stopped = true;
     _send(PlaybackEvent.stopped, position, paused: false);

@@ -52,8 +52,26 @@ e Windows.
   num canal mostra-o num vídeo pequeno com o guia (agora e a seguir); o
   segundo abre o ecrã inteiro, que continua o mesmo stream sem nova
   ligação ao servidor.
-- Reprodução com media_kit (libmpv) e perfis de pré-buffer
-  (Rápido / Normal / Estável).
+- **Favoritos**: clique longo num canal (botão direito no computador, ou a
+  estrela na pré-visualização com o comando). Aparecem no grupo
+  *Favoritos*, no topo da lista de grupos da TV e do Guia.
+- **Guia** em grelha: canais em linhas e o tempo na horizontal, de ontem
+  até daqui a três dias. Num programa a dar: ver em direto ou, se o canal
+  tiver catch-up, do início; nos que já passaram, a gravação.
+- **Pesquisa** (lupa no topo de cada secção): canais, filmes e séries ao
+  mesmo tempo, sem acentos nem maiúsculas e com as palavras por qualquer
+  ordem.
+- **Continuar a ver**: a app guarda onde ficaste em cada filme e
+  episódio. Os que ficaram a meio aparecem no grupo *Continuar a ver* de
+  Filmes e Séries (retomam logo), com uma barra de progresso nos posters,
+  e os episódios vistos aparecem marcados.
+- Reprodução com media_kit (libmpv), descodificação na placa gráfica e
+  perfis de pré-buffer (Rápido / Normal / Estável). Mudar de canal abre-o
+  logo; só carregando várias vezes seguidas é que espera pelo último. No
+  Android há ainda a opção *Descodificação direta no ecrã* (sem cópias,
+  para TV boxes fracas).
+- Logos e posters guardados no dispositivo: não voltam a ser
+  descarregados a cada arranque.
 - VPN pessoal em **Definições → VPN**, de duas formas:
   - **WireGuard**, com um ficheiro `.conf` (Android e Windows). No Android
     pode passar só o tráfego da app; no Windows pede administrador só na
@@ -69,7 +87,8 @@ e Windows.
   lê o código QR no ecrã e preenche a página que abre (mesma rede Wi-Fi;
   os dados não passam pela internet).
 - Opção **Memorizar dados** no login.
-- Tema claro ou escuro, e atualizações a partir das releases deste
+- Tema escuro (por omissão nas instalações novas) ou claro, sem
+  animações entre ecrãs, e atualizações a partir das releases deste
   repositório.
 
 ## Desenvolvimento

@@ -41,13 +41,18 @@ const VodMovieSchema = CollectionSchema(
       name: r'remoteId',
       type: IsarType.string,
     ),
-    r'sortIndex': PropertySchema(
+    r'searchName': PropertySchema(
       id: 8,
+      name: r'searchName',
+      type: IsarType.string,
+    ),
+    r'sortIndex': PropertySchema(
+      id: 9,
       name: r'sortIndex',
       type: IsarType.long,
     ),
     r'syncStamp': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'syncStamp',
       type: IsarType.long,
     ),
@@ -126,6 +131,12 @@ int _vodMovieEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  {
+    final value = object.searchName;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -143,8 +154,9 @@ void _vodMovieSerialize(
   writer.writeString(offsets[5], object.poster);
   writer.writeDouble(offsets[6], object.rating);
   writer.writeString(offsets[7], object.remoteId);
-  writer.writeLong(offsets[8], object.sortIndex);
-  writer.writeLong(offsets[9], object.syncStamp);
+  writer.writeString(offsets[8], object.searchName);
+  writer.writeLong(offsets[9], object.sortIndex);
+  writer.writeLong(offsets[10], object.syncStamp);
 }
 
 VodMovie _vodMovieDeserialize(
@@ -163,8 +175,8 @@ VodMovie _vodMovieDeserialize(
   object.poster = reader.readStringOrNull(offsets[5]);
   object.rating = reader.readDouble(offsets[6]);
   object.remoteId = reader.readStringOrNull(offsets[7]);
-  object.sortIndex = reader.readLong(offsets[8]);
-  object.syncStamp = reader.readLong(offsets[9]);
+  object.sortIndex = reader.readLong(offsets[9]);
+  object.syncStamp = reader.readLong(offsets[10]);
   return object;
 }
 
@@ -192,8 +204,10 @@ P _vodMovieDeserializeProp<P>(
     case 7:
       return (reader.readStringOrNull(offset)) as P;
     case 8:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 9:
+      return (reader.readLong(offset)) as P;
+    case 10:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1652,6 +1666,170 @@ extension VodMovieQueryFilter
     });
   }
 
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> searchNameIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'searchName'),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition>
+  searchNameIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'searchName'),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> searchNameEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> searchNameGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> searchNameLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> searchNameBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'searchName',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> searchNameStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> searchNameEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> searchNameContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'searchName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> searchNameMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'searchName',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> searchNameIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'searchName', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition>
+  searchNameIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'searchName', value: ''),
+      );
+    });
+  }
+
   QueryBuilder<VodMovie, VodMovie, QAfterFilterCondition> sortIndexEqualTo(
     int value,
   ) {
@@ -1875,6 +2053,18 @@ extension VodMovieQuerySortBy on QueryBuilder<VodMovie, VodMovie, QSortBy> {
     });
   }
 
+  QueryBuilder<VodMovie, VodMovie, QAfterSortBy> sortBySearchName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'searchName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterSortBy> sortBySearchNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'searchName', Sort.desc);
+    });
+  }
+
   QueryBuilder<VodMovie, VodMovie, QAfterSortBy> sortBySortIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sortIndex', Sort.asc);
@@ -2011,6 +2201,18 @@ extension VodMovieQuerySortThenBy
     });
   }
 
+  QueryBuilder<VodMovie, VodMovie, QAfterSortBy> thenBySearchName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'searchName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VodMovie, VodMovie, QAfterSortBy> thenBySearchNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'searchName', Sort.desc);
+    });
+  }
+
   QueryBuilder<VodMovie, VodMovie, QAfterSortBy> thenBySortIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sortIndex', Sort.asc);
@@ -2099,6 +2301,14 @@ extension VodMovieQueryWhereDistinct
     });
   }
 
+  QueryBuilder<VodMovie, VodMovie, QDistinct> distinctBySearchName({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'searchName', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<VodMovie, VodMovie, QDistinct> distinctBySortIndex() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'sortIndex');
@@ -2166,6 +2376,12 @@ extension VodMovieQueryProperty
   QueryBuilder<VodMovie, String?, QQueryOperations> remoteIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'remoteId');
+    });
+  }
+
+  QueryBuilder<VodMovie, String?, QQueryOperations> searchNameProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'searchName');
     });
   }
 

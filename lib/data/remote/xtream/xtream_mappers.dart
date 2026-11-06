@@ -162,7 +162,23 @@ AccountInfo mapAccountInfo(
         ?formats.map(asString).whereType<String>().toList()
         : <String>[]
     ..serverTimezone = asString(serverInfo?['timezone'])
+    ..serverUtcOffsetMinutes = serverUtcOffsetMinutes(serverInfo)
     ..lastLoginAt = DateTime.now();
+}
+
+/// Diferença da hora do servidor para UTC, a partir de `time_now` (hora
+/// local, "2026-11-06 12:01:22") e `timestamp_now` (Unix). Arredondada ao
+/// quarto de hora: o pedido demora uns segundos.
+int? serverUtcOffsetMinutes(Map<String, dynamic>? serverInfo) {
+  final now = asString(serverInfo?['time_now']);
+  final stamp = asInt(serverInfo?['timestamp_now']);
+  if (now == null || stamp == null || stamp <= 0) return null;
+  // Lida como se fosse UTC, só para comparar os campos.
+  final local = DateTime.tryParse('${now.replaceFirst(' ', 'T')}Z');
+  if (local == null) return null;
+  final utc = DateTime.fromMillisecondsSinceEpoch(stamp * 1000, isUtc: true);
+  final minutes = local.difference(utc).inSeconds / 60;
+  return (minutes / 15).round() * 15;
 }
 
 /// `category_id` é o campo clássico; painéis recentes (XUI) mandam também
