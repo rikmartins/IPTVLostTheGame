@@ -18,8 +18,10 @@ final appVersionProvider = FutureProvider<AppVersion?>((ref) async {
 });
 
 /// Só há atualizações se houver repositório configurado e a plataforma as
-/// permitir (o iOS não permite instalar fora da App Store).
+/// permitir (o iOS não permite instalar fora da App Store, e a versão da
+/// Play Store só se atualiza pela loja).
 bool get updatesAvailableOnThisPlatform =>
+    !isPlayStoreBuild &&
     githubRepository.isNotEmpty &&
     currentUpdatePlatform != UpdatePlatform.unsupported;
 

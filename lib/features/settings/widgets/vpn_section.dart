@@ -177,7 +177,7 @@ class _Configured extends ConsumerWidget {
                     icon: const Icon(Icons.upload_file),
                     label: const Text('Substituir .conf'),
                   ),
-                  if (isAndroidTvBuild)
+                  if (isAndroidTv)
                     OutlinedButton.icon(
                       onPressed: vpn.busy
                           ? null
@@ -194,7 +194,7 @@ class _Configured extends ConsumerWidget {
                     icon: const Icon(Icons.edit_outlined),
                     label: const Text('Alterar'),
                   ),
-                  if (isAndroidTvBuild)
+                  if (isAndroidTv)
                     OutlinedButton.icon(
                       onPressed: vpn.busy
                           ? null
@@ -288,7 +288,7 @@ class _NoWireGuard extends ConsumerWidget {
               ),
               // Na TV o .conf costuma estar no telemóvel, e colar com o
               // comando é impraticável.
-              if (isAndroidTvBuild)
+              if (isAndroidTv)
                 OutlinedButton.icon(
                   onPressed: () => _wireguardFromPhone(context, ref),
                   icon: const Icon(Icons.qr_code_2),
@@ -332,7 +332,7 @@ class _NoIkev2 extends ConsumerWidget {
                 icon: const Icon(Icons.key_outlined),
                 label: const Text('Configurar credenciais'),
               ),
-              if (isAndroidTvBuild)
+              if (isAndroidTv)
                 OutlinedButton.icon(
                   onPressed: () => _ikev2FromPhone(context, ref),
                   icon: const Icon(Icons.qr_code_2),
@@ -574,7 +574,7 @@ class _Ikev2DialogState extends State<_Ikev2Dialog> {
               const SizedBox(height: 16),
               TextField(
                 controller: _server,
-                autofocus: !isAndroidTvBuild,
+                autofocus: !isAndroidTv,
                 keyboardType: TextInputType.url,
                 autocorrect: false,
                 textInputAction: TextInputAction.next,

@@ -22,6 +22,16 @@ class AppUpdateSection extends ConsumerWidget {
       value: version?.toString() ?? '…',
     );
 
+    // As regras da Play Store não deixam a app instalar versões novas de si
+    // própria.
+    if (isPlayStoreBuild) {
+      return Column(
+        children: [
+          versionTile,
+          const SettingsHint('As atualizações chegam pela Play Store.'),
+        ],
+      );
+    }
     if (githubRepository.isEmpty) {
       return Column(
         children: [

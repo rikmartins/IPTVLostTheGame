@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'app/app.dart';
 import 'app/profiles_controller.dart';
 import 'app/providers.dart';
+import 'core/config/app_config.dart';
 import 'core/database/app_database.dart';
 import 'core/images/cached_network_image.dart';
 import 'data/profiles/profile.dart';
@@ -16,6 +17,7 @@ import 'data/profiles/profile_store.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
+  await detectAndroidTv();
 
   final database = await AppDatabase.open();
   final images = await _imageCache();

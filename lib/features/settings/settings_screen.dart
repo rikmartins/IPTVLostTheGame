@@ -11,6 +11,7 @@ import '../../app/sync_controller.dart';
 import '../../app/theme.dart';
 import '../../app/widgets/section_scaffold.dart';
 import '../../app/widgets/sync_indicator.dart';
+import '../../core/config/app_config.dart';
 import '../../core/utils/time_format.dart';
 import '../../data/local/models/account_info.dart';
 import '../../data/local/models/app_settings.dart';
@@ -105,8 +106,11 @@ class SettingsScreen extends ConsumerWidget {
                     'Se o vídeo ficar preto, desliga.',
                   ),
                 ),
-              const SettingsSectionTitle('VPN'),
-              const VpnSection(),
+              // A Play Store só aceita VPN em apps que são uma VPN.
+              if (!isPlayStoreBuild) ...[
+                const SettingsSectionTitle('VPN'),
+                const VpnSection(),
+              ],
               const SettingsSectionTitle('Lista'),
               for (final kind in SyncKind.values)
                 _SyncStateTile(

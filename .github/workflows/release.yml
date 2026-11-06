@@ -2,11 +2,14 @@
 #
 #   git tag v0.2.0 && git push origin v0.2.0
 #
-# Cada release tem sempre os quatro ficheiros, ou não é publicada:
+# Cada release tem sempre os cinco ficheiros, ou não é publicada:
 #   SoProMedia-Android.apk      telemóveis e tablets
 #   SoProMedia-AndroidTV.apk    Android TV
 #   SoProMedia-Setup.exe        Windows, por utilizador (atualiza sem UAC)
 #   SoProMedia-Windows.msi      Windows, para todos os utilizadores
+#   SoProMedia-PlayStore.aab    versão da Play Store, para enviar à Play
+#                               Console (não se instala diretamente; o
+#                               atualizador da app ignora-o)
 #
 # Os nomes não levam a versão de propósito: o README liga a
 # https://github.com/<repo>/releases/latest/download/<nome>, que aponta
@@ -38,7 +41,7 @@ env:
 
 jobs:
   android:
-    name: APKs Android
+    name: APKs Android e pacote da Play Store
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -91,6 +94,16 @@ jobs:
               --build-name="$BUILD_NAME" \
               --build-number="${{ github.run_number }}" 2>&1 | tee -a build.log
           done
+          # Versão da Play Store: .aab, o formato que a Play Console aceita,
+          # com todas as arquiteturas (a loja entrega a de cada aparelho).
+          # Assinado com a mesma chave, que na Play Store é a de upload.
+          flutter build appbundle --release --flavor play \
+            --build-name="$BUILD_NAME" \
+            --build-number="${{ github.run_number }}" 2>&1 | tee -a build.log
+
+      # A Play Store recusa a app se declarar o atualizador próprio ou a VPN.
+      - name: Manifest da Play Store
+        run: bash .github/scripts/check-play-manifest.sh
 
       - name: Erro do build no resumo
         if: failure()
@@ -103,11 +116,14 @@ jobs:
           mkdir -p dist
           cp build/app/outputs/flutter-apk/app-mobile-release.apk dist/SoProMedia-Android.apk
           cp build/app/outputs/flutter-apk/app-tv-release.apk dist/SoProMedia-AndroidTV.apk
+          cp build/app/outputs/bundle/playRelease/app-play-release.aab dist/SoProMedia-PlayStore.aab
 
       - uses: actions/upload-artifact@v7
         with:
           name: android
-          path: dist/*.apk
+          path: |
+            dist/*.apk
+            dist/*.aab
           if-no-files-found: error
 
   windows:
@@ -172,13 +188,14 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Confirmar os quatro ficheiros
+      - name: Confirmar os cinco ficheiros
         run: |
           for file in \
             SoProMedia-Android.apk \
             SoProMedia-AndroidTV.apk \
             SoProMedia-Setup.exe \
-            SoProMedia-Windows.msi; do
+            SoProMedia-Windows.msi \
+            SoProMedia-PlayStore.aab; do
             if [ ! -f "dist/$file" ]; then
               echo "::error::Falta $file: a release não é publicada incompleta."
               exit 1

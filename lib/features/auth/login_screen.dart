@@ -15,7 +15,7 @@ import '../phone_entry/phone_entry_panel.dart';
 /// Escrever com o comando da TV é lento: lá o QR aparece logo. Nos
 /// computadores fica atrás de um botão; no telemóvel não faz sentido.
 final bool _phoneEntryAvailable =
-    isAndroidTvBuild || Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+    isAndroidTv || Platform.isWindows || Platform.isMacOS || Platform.isLinux;
 
 /// Exemplo de endereço de cada tipo de servidor.
 String _serverHint(SourceKind kind) => switch (kind) {
@@ -96,7 +96,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _busy = false;
   bool _obscure = true;
   bool _remember = true;
-  bool _showPhone = isAndroidTvBuild;
+  bool _showPhone = isAndroidTv;
   String? _error;
 
   @override
@@ -233,7 +233,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           TextField(
             controller: _name,
             // Na TV, focar um campo abre logo o teclado por cima do QR.
-            autofocus: !isAndroidTvBuild,
+            autofocus: !isAndroidTv,
             enabled: !_busy,
             textInputAction: TextInputAction.next,
             textCapitalization: TextCapitalization.sentences,
@@ -310,7 +310,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ],
           const SizedBox(height: 16),
           FilledButton(
-            autofocus: isAndroidTvBuild,
+            autofocus: isAndroidTv,
             onPressed: _busy ? null : _submit,
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(48),
@@ -322,7 +322,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   )
                 : const Text('Entrar'),
           ),
-          if (_phoneEntryAvailable && !isAndroidTvBuild) ...[
+          if (_phoneEntryAvailable && !isAndroidTv) ...[
             const SizedBox(height: 8),
             TextButton.icon(
               onPressed: () => setState(() => _showPhone = !_showPhone),

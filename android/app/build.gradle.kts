@@ -42,12 +42,17 @@ android {
         versionName = flutter.versionName
     }
 
-    // Duas variantes com o mesmo applicationId (é a mesma app, com a mesma
-    // chave): "mobile" para telemóveis/tablets e "tv" para Android TV, que só
-    // muda o manifest (src/tv). A app sabe qual é pelo `appFlavor` e o
-    // atualizador descarrega sempre a mesma variante.
+    // Versão completa (GitHub), em duas variantes com o mesmo applicationId
+    // (é a mesma app, com a mesma chave): "mobile" para telemóveis/tablets e
+    // "tv" para Android TV, que só muda o manifest (src/tv). A app sabe qual
+    // é pelo `appFlavor` e o atualizador descarrega sempre a mesma variante.
+    //
+    // "play" é a versão da Play Store: outra app (outro applicationId), um só
+    // pacote para telemóveis e TVs, e sem o que as regras da loja não deixam
+    // (atualizador próprio e VPN; ver src/play).
     //   flutter run --flavor mobile
     //   flutter build apk --flavor tv
+    //   flutter build appbundle --flavor play
     flavorDimensions += "device"
     productFlavors {
         create("mobile") {
@@ -56,6 +61,20 @@ android {
         create("tv") {
             dimension = "device"
         }
+        create("play") {
+            dimension = "device"
+            // Também nunca muda depois da primeira publicação na Play Store.
+            applicationId = "com.sopromedia.app"
+        }
+    }
+
+    sourceSets {
+        // O código nativo da VPN (IKEv2) só entra na versão completa; a da
+        // Play Store tem um VpnBridge vazio em src/play/kotlin.
+        getByName("mobile").java.srcDir("src/full/kotlin")
+        getByName("tv").java.srcDir("src/full/kotlin")
+        // O banner do launcher da TV é o mesmo nas duas versões.
+        getByName("play").res.srcDir("src/tv/res")
     }
 
     signingConfigs {

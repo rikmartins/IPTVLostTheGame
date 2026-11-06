@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Versão da Play Store (flavor "play"), fundida por cima de src/main.
+     O CI verifica que nada do que aqui se tira volta a aparecer
+     (.github/scripts/check-play-manifest.sh). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Um só pacote para telemóveis e TVs: nenhum dos dois é obrigatório. -->
+    <uses-feature android:name="android.software.leanback" android:required="false"/>
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
+
+    <!-- Atualizações só pela Play Store: a Google não deixa uma app da loja
+         instalar versões novas de si própria. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" tools:node="remove"/>
+
+    <!-- Sem VPN: tudo o que o wireguard_flutter_plus (e a biblioteca de
+         túnel do WireGuard) junta ao manifest. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" tools:node="remove"/>
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" tools:node="remove"/>
+
+    <application android:banner="@drawable/banner">
+        <service android:name="orban.group.wireguard_flutter.VpnForegroundService" tools:node="remove"/>
+        <service android:name="com.wireguard.android.backend.GoBackend$VpnService" tools:node="remove"/>
+
+        <!-- Aparece também no launcher do Android TV. -->
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

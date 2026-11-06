@@ -115,7 +115,7 @@ class _CategoryVisibilityPanelState
         ),
         // No comando da TV escrever é penoso e o campo de texto pode
         // prender o foco: lá fica só a lista e os dois botões.
-        if (!isAndroidTvBuild)
+        if (!isAndroidTv)
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
             child: TextField(

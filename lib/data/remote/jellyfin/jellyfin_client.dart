@@ -90,7 +90,7 @@ class JellyfinClient {
   /// Nome do dispositivo no painel do servidor. No computador é o nome da
   /// máquina, para distinguir vários.
   static String get deviceName {
-    if (Platform.isAndroid) return isAndroidTvBuild ? 'Android TV' : 'Android';
+    if (Platform.isAndroid) return isAndroidTv ? 'Android TV' : 'Android';
     if (Platform.isIOS) return 'iOS';
     final host = Platform.localHostname.replaceAll(RegExp(r'[^\w .-]'), '');
     return host.isEmpty ? Platform.operatingSystem : host;

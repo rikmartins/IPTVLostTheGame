@@ -104,13 +104,23 @@ flutter test
 flutter run -d windows
 flutter run --flavor mobile   # Android (telemóvel/tablet)
 flutter run --flavor tv       # Android TV
+flutter run --flavor play     # Android, versão da Play Store
 ```
 
-No Android há duas variantes (flavors) com o mesmo identificador
-(`com.iptvapp.lostthegame`): `mobile` e `tv`. Só o manifest muda
-(`android/app/src/tv`: launcher e banner da TV). O identificador vem do
-nome antigo da app e nunca muda: com outro, o Android trata-a como uma app
-diferente e não atualiza a instalada.
+No Android há duas versões da app:
+
+- **Completa** (releases deste repositório), em duas variantes (flavors)
+  com o mesmo identificador (`com.iptvapp.lostthegame`): `mobile` e `tv`.
+  Só o manifest muda (`android/app/src/tv`: launcher e banner da TV). O
+  identificador vem do nome antigo da app e nunca muda: com outro, o
+  Android trata-a como uma app diferente e não atualiza a instalada.
+- **Play Store** (`play`, identificador `com.sopromedia.app`): um só pacote
+  para telemóveis e TVs (a app pergunta ao Android se está numa TV), sem
+  VPN nem atualizador próprio, que as regras da loja não permitem. O
+  manifest em `android/app/src/play` tira as permissões e serviços que os
+  plugins trazem, e o CI falha se algum voltar
+  (`.github/scripts/check-play-manifest.sh`). O código nativo da VPN fica
+  em `android/app/src/full`, só na versão completa.
 
 ## Publicar uma versão
 
@@ -132,9 +142,14 @@ diferente e não atualiza a instalada.
    ```
 
    O workflow `Release` publica sempre os quatro ficheiros da tabela de
-   download (ou nenhum). Os nomes não levam a versão, para os links acima
-   apontarem sempre para a mais recente; a versão da app vem da tag. O
-   atualizador da app descarrega sempre a mesma variante que está instalada.
+   download e o `SoProMedia-PlayStore.aab` (ou nenhum). Os nomes não levam
+   a versão, para os links acima apontarem sempre para a mais recente; a
+   versão da app vem da tag. O atualizador da app descarrega sempre a mesma
+   variante que está instalada.
+
+3. **Play Store:** enviar o `SoProMedia-PlayStore.aab` da release para a
+   Play Console. Está assinado com a mesma chave, que na Play Store serve
+   de chave de upload (a Google assina a app instalada com a dela).
 
    Tags com hífen (`v0.2.0-beta.1`) saem como pré-release e a app não as
    oferece como atualização.

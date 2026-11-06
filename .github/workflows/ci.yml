@@ -24,7 +24,7 @@ jobs:
       - run: flutter test
 
   android:
-    name: Build Android release (telemóvel e TV)
+    name: Build Android release (telemóvel, TV e Play Store)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -44,10 +44,13 @@ jobs:
       - name: Build
         run: |
           set -o pipefail
-          for flavor in mobile tv; do
+          for flavor in mobile tv play; do
             flutter build apk --release --flavor "$flavor" \
               --target-platform android-arm,android-arm64 2>&1 | tee -a build.log
           done
+      # A Play Store recusa a app se declarar o atualizador próprio ou a VPN.
+      - name: Manifest da Play Store
+        run: bash .github/scripts/check-play-manifest.sh
       # Os logs só se veem com sessão iniciada; a anotação é pública.
       - name: Erro do build no resumo
         if: failure()
