@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/rikmartins/IPTVLostTheGame/releases/latest"><img src="https://img.shields.io/github/v/release/rikmartins/IPTVLostTheGame?label=%C3%BAltima%20vers%C3%A3o&color=21615A" alt="Última versão"></a>
+  <a href="https://github.com/rikmartins/SoPro-Media/releases/latest"><img src="https://img.shields.io/github/v/release/rikmartins/SoPro-Media?label=%C3%BAltima%20vers%C3%A3o&color=21615A" alt="Última versão"></a>
 </p>
 
 ## Download
@@ -12,10 +12,10 @@ Os links descarregam sempre a versão mais recente.
 
 | Dispositivo | Download direto |
 |---|---|
-| Android (telemóvel e tablet) | [SoProMedia-Android.apk](https://github.com/rikmartins/IPTVLostTheGame/releases/latest/download/SoProMedia-Android.apk) |
-| Android TV | [SoProMedia-AndroidTV.apk](https://github.com/rikmartins/IPTVLostTheGame/releases/latest/download/SoProMedia-AndroidTV.apk) |
-| Windows (instalador) | [SoProMedia-Setup.exe](https://github.com/rikmartins/IPTVLostTheGame/releases/latest/download/SoProMedia-Setup.exe) |
-| Windows (MSI) | [SoProMedia-Windows.msi](https://github.com/rikmartins/IPTVLostTheGame/releases/latest/download/SoProMedia-Windows.msi) |
+| Android (telemóvel e tablet) | [SoProMedia-Android.apk](https://github.com/rikmartins/SoPro-Media/releases/latest/download/SoProMedia-Android.apk) |
+| Android TV | [SoProMedia-AndroidTV.apk](https://github.com/rikmartins/SoPro-Media/releases/latest/download/SoProMedia-AndroidTV.apk) |
+| Windows (instalador) | [SoProMedia-Setup.exe](https://github.com/rikmartins/SoPro-Media/releases/latest/download/SoProMedia-Setup.exe) |
+| Windows (MSI) | [SoProMedia-Windows.msi](https://github.com/rikmartins/SoPro-Media/releases/latest/download/SoProMedia-Windows.msi) |
 
 **Android / Android TV:** ao abrir o APK, o Android pede para autorizar a
 instalação de apps desconhecidas para o browser (ou para a app que usaste

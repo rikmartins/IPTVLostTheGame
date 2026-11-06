@@ -11,5 +11,5 @@ bool get isAndroidTvBuild => appFlavor == 'tv';
 /// `flutter build apk --dart-define=GITHUB_REPO=dono/repo`.
 const githubRepository = String.fromEnvironment(
   'GITHUB_REPO',
-  defaultValue: 'rikmartins/IPTVLostTheGame',
+  defaultValue: 'rikmartins/SoPro-Media',
 );

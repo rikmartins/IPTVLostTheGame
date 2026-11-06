@@ -19,7 +19,7 @@
 #>
 param(
   [string]$AndroidDir = (Join-Path $PSScriptRoot '..\android'),
-  [string]$Repository = 'rikmartins/IPTVLostTheGame'
+  [string]$Repository = 'rikmartins/SoPro-Media'
 )
 
 $ErrorActionPreference = 'Stop'

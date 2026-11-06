@@ -14,7 +14,7 @@ AppId={{700E03DA-B317-4316-AED4-98745E712D00}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisher=rikmartins
-AppPublisherURL=https://github.com/rikmartins/IPTVLostTheGame
+AppPublisherURL=https://github.com/rikmartins/SoPro-Media
 ; Instalação por utilizador (%LOCALAPPDATA%\Programs): as atualizações
 ; automáticas correm sem UAC. Quem quiser pode instalar para todos.
 PrivilegesRequired=lowest
